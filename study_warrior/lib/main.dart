@@ -65,7 +65,7 @@ void main() async {
         ),
         // Pomodoro timer with notification support
         ChangeNotifierProvider(
-          create: (_) => PomodoroProvider(notificationService),
+          create: (_) => PomodoroProvider(notificationService, databaseService),
         ),
         // Habit tracking with streaks
         ChangeNotifierProvider(

@@ -13,7 +13,7 @@ import '../providers/task_provider.dart';
 import '../providers/habit_provider.dart';
 import '../theme/app_theme.dart';
 import 'detailed_stats_screen.dart';
-import 'ai_notes_generator_screen.dart';
+import 'settings_screen.dart';
 import 'saved_notes_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -74,19 +74,34 @@ class DashboardScreen extends StatelessWidget {
       emoji = '🌙';
     }
 
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '$greeting $emoji',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$greeting $emoji',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Study Warrior',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+          ],
         ),
-        SizedBox(height: 4),
-        Text(
-          'Study Warrior',
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+        IconButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+          },
+          icon: const Icon(Icons.settings_rounded),
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(20),
+          ),
         ),
       ],
     );
@@ -396,11 +411,11 @@ class DashboardScreen extends StatelessWidget {
         Row(
           children: [
             _QuickActionButton(
-              icon: Icons.auto_awesome,
-              label: 'AI Notes',
+              icon: Icons.workspace_premium_rounded,
+              label: 'Premium AI',
               color: Colors.purpleAccent,
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AiNotesGeneratorScreen()));
+                if (onNavigate != null) onNavigate!(4);
               },
             ),
             SizedBox(width: 8),

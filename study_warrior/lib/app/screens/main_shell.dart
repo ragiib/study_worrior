@@ -5,12 +5,15 @@
 // ============================================================================
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/dashboard_provider.dart';
 
 import 'dashboard_screen.dart';
 import 'tasks_screen.dart';
 import 'pomodoro_screen.dart';
 import 'habits_screen.dart';
-import 'settings_screen.dart';
+import 'premium_ai_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -29,7 +32,7 @@ class _MainShellState extends State<MainShell> {
     const TasksScreen(),
     const PomodoroScreen(),
     const HabitsScreen(),
-    const SettingsScreen(),
+    const PremiumAiScreen(),
   ];
 
   @override
@@ -60,13 +63,19 @@ class _MainShellState extends State<MainShell> {
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          onTap: (index) => setState(() => _currentIndex = index),
+          onTap: (index) {
+            setState(() => _currentIndex = index);
+            if (index == 0) {
+              // Force a reload of the dashboard stats when navigating back to it
+              Provider.of<DashboardProvider>(context, listen: false).loadStats();
+            }
+          },
           items: [
             _buildNavItem(Icons.dashboard_rounded, 'Dashboard'),
             _buildNavItem(Icons.task_alt_rounded, 'Tasks'),
             _buildNavItem(Icons.timer_rounded, 'Timer'),
             _buildNavItem(Icons.auto_awesome_rounded, 'Habits'),
-            _buildNavItem(Icons.settings_rounded, 'Settings'),
+            _buildNavItem(Icons.workspace_premium_rounded, 'Premium AI'),
           ],
         ),
       ),

@@ -6,12 +6,16 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 import '../../services/notification_service.dart';
+import '../../services/database_service.dart';
+import '../../models/study_session_model.dart';
 
 enum PomodoroState { idle, running, paused, breakTime }
 
 class PomodoroProvider extends ChangeNotifier {
   final NotificationService _notificationService;
+  final DatabaseService _dbService;
 
   // ── Timer Configuration ─────────────────────────────────────────────
   int _workMinutes = 25;
@@ -23,7 +27,7 @@ class PomodoroProvider extends ChangeNotifier {
   Timer? _timer;
   bool _isBreak = false;
 
-  PomodoroProvider(this._notificationService);
+  PomodoroProvider(this._notificationService, this._dbService);
 
   // ── Getters ─────────────────────────────────────────────────────────
   int get workMinutes => _workMinutes;
@@ -123,6 +127,16 @@ class PomodoroProvider extends ChangeNotifier {
     } else {
       // Work session finished → start break
       _completedSessions++;
+      
+      // Save study session to database
+      final session = StudySession(
+        id: const Uuid().v4(),
+        durationMinutes: _workMinutes,
+        date: DateTime.now(),
+        type: 'pomodoro',
+      );
+      _dbService.insertSession(session);
+
       _notificationService.showNotification(
         title: '🎉 Session Complete!',
         body: 'Great job! Take a well-deserved break.',
