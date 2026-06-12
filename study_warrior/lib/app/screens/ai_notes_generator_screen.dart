@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -134,11 +135,17 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
                               ),
                               clipBehavior: Clip.antiAlias,
                               // For web compatibility we should use network image, but for simplicity we assume file exists or we can use bytes
-                              child: Image.file(
-                                File(provider.selectedImages[index].path),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported),
-                              ),
+                              child: kIsWeb
+                                  ? Image.network(
+                                      provider.selectedImages[index].path,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported),
+                                    )
+                                  : Image.file(
+                                      File(provider.selectedImages[index].path),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.image_not_supported),
+                                    ),
                             ),
                             Positioned(
                               top: 4,

@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'app/app.dart';
 import 'app/providers/theme_provider.dart';
@@ -22,6 +23,12 @@ import 'services/notification_service.dart';
 void main() async {
   // Ensure Flutter bindings are initialized before any async work
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('Could not load .env file: $e');
+  }
 
   // Lock orientation to portrait for optimal UX (not supported on web)
   if (!kIsWeb) {
