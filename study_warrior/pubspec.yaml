@@ -1,0 +1,39 @@
+name: study_warrior
+description: "Study Warrior - A premium study productivity app"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+  flutter: ">=3.29.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State management
+  provider: ^6.1.2
+  # Local database
+  path: ^1.9.1
+  # Charts
+  fl_chart: ^0.70.2
+  # Calendar
+  table_calendar: ^3.2.0
+  # Settings persistence
+  shared_preferences: ^2.5.3
+  # Notifications
+  flutter_local_notifications: ^18.0.1
+  # Date formatting
+  intl: ^0.20.2
+  # UUID generation
+  uuid: ^4.5.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
