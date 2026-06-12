@@ -26,6 +26,9 @@ class AiNotesProvider extends ChangeNotifier {
   String _processingStatus = '';
   String get processingStatus => _processingStatus;
 
+  String? _lastError;
+  String? get lastError => _lastError;
+
   AiNotesProvider(this._dbService) {
     _loadNotes();
   }
@@ -104,7 +107,8 @@ class AiNotesProvider extends ChangeNotifier {
       return newNote;
 
     } catch (e) {
-      print('Error generating notes: $e');
+      _lastError = e.toString();
+      debugPrint('Error generating notes: $e');
       return null;
     } finally {
       _isProcessing = false;

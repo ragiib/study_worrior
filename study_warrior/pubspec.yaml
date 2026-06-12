@@ -37,8 +37,6 @@ dependencies:
   http: ^1.6.0
   flutter_image_compress: ^2.4.0
   flutter_markdown: ^0.7.7+1
-  google_generative_ai: ^0.4.7
-  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:

@@ -44,8 +44,18 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
         ),
       );
     } else if (mounted) {
+      final error = provider.lastError ?? 'Unknown error. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to generate notes. Please try again.')),
+        SnackBar(
+          content: Text('Error: $error'),
+          duration: const Duration(seconds: 8),
+          backgroundColor: Colors.red.shade700,
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
       );
     }
   }
