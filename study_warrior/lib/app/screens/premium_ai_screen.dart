@@ -50,7 +50,7 @@ class PremiumAiScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       const Text(
-                        'Premium AI',
+                        'Premium Tools',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w900,

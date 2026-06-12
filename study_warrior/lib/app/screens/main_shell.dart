@@ -72,7 +72,7 @@ class _MainShellState extends State<MainShell> {
             _buildNavItem(Icons.dashboard_rounded, 'Dashboard'),
             _buildNavItem(Icons.task_alt_rounded, 'Tasks'),
             _buildNavItem(Icons.timer_rounded, 'Timer'),
-            _buildNavItem(Icons.workspace_premium_rounded, 'Premium AI'),
+            _buildNavItem(Icons.workspace_premium_rounded, 'Premium Tools'),
           ],
         ),
       ),

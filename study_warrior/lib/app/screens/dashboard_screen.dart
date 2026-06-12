@@ -475,7 +475,7 @@ class DashboardScreen extends StatelessWidget {
           children: [
             _QuickActionButton(
               icon: Icons.workspace_premium_rounded,
-              label: 'Premium AI',
+              label: 'Premium Tools',
               color: Colors.purpleAccent,
               onTap: () {
                 if (onNavigate != null) onNavigate!(4);
