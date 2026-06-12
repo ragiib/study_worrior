@@ -7,12 +7,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/task_model.dart';
 import '../models/habit_model.dart';
 import '../models/study_session_model.dart';
+import '../models/ai_note_model.dart';
 
 class DatabaseService {
   bool _initialized = false;
   late Box<String> _tasksBox;
   late Box<String> _habitsBox;
   late Box<String> _sessionsBox;
+  late Box<String> _aiNotesBox;
 
   bool get isInitialized => _initialized;
 
@@ -25,6 +27,7 @@ class DatabaseService {
     _tasksBox = await Hive.openBox<String>('tasks');
     _habitsBox = await Hive.openBox<String>('habits');
     _sessionsBox = await Hive.openBox<String>('sessions');
+    _aiNotesBox = await Hive.openBox<String>('ai_notes');
     
     _initialized = true;
   }
@@ -89,6 +92,32 @@ class DatabaseService {
     final habit = Habit.fromMap(jsonDecode(jsonStr));
     habit.toggleCompletion(date);
     await updateHabit(habit);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // AI NOTES OPERATIONS
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<List<AiNote>> getAllAiNotes() async {
+    if (!_initialized) return [];
+    return _aiNotesBox.values.map((jsonStr) {
+      return AiNote.fromMap(jsonDecode(jsonStr));
+    }).toList();
+  }
+
+  Future<void> insertAiNote(dynamic noteMap, String id) async {
+    if (!_initialized) return;
+    await _aiNotesBox.put(id, jsonEncode(noteMap));
+  }
+
+  Future<void> updateAiNote(dynamic noteMap, String id) async {
+    if (!_initialized) return;
+    await _aiNotesBox.put(id, jsonEncode(noteMap));
+  }
+
+  Future<void> deleteAiNote(String id) async {
+    if (!_initialized) return;
+    await _aiNotesBox.delete(id);
   }
 
   // ══════════════════════════════════════════════════════════════════════

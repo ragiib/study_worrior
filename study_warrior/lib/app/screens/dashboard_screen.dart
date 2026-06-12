@@ -13,6 +13,8 @@ import '../providers/task_provider.dart';
 import '../providers/habit_provider.dart';
 import '../theme/app_theme.dart';
 import 'detailed_stats_screen.dart';
+import 'ai_notes_generator_screen.dart';
+import 'saved_notes_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final Function(int)? onNavigate;
@@ -373,13 +375,35 @@ class DashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Quick Actions',
-          style: Theme.of(context).textTheme.titleLarge,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Quick Actions',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedNotesScreen()));
+              },
+              icon: const Icon(Icons.library_books, size: 16),
+              label: const Text('Saved Notes'),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
+            ),
+          ],
         ),
         SizedBox(height: 12),
         Row(
           children: [
+            _QuickActionButton(
+              icon: Icons.auto_awesome,
+              label: 'AI Notes',
+              color: Colors.purpleAccent,
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AiNotesGeneratorScreen()));
+              },
+            ),
+            SizedBox(width: 8),
             _QuickActionButton(
               icon: Icons.add_task_rounded,
               label: 'Add Task',
@@ -388,16 +412,16 @@ class DashboardScreen extends StatelessWidget {
                 if (onNavigate != null) onNavigate!(1);
               },
             ),
-            SizedBox(width: 12),
+            SizedBox(width: 8),
             _QuickActionButton(
               icon: Icons.play_arrow_rounded,
-              label: 'Start Timer',
+              label: 'Timer',
               color: AppTheme.secondaryColor,
               onTap: () {
                 if (onNavigate != null) onNavigate!(2);
               },
             ),
-            SizedBox(width: 12),
+            SizedBox(width: 8),
             _QuickActionButton(
               icon: Icons.check_rounded,
               label: 'Log Habit',

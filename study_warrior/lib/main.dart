@@ -15,6 +15,7 @@ import 'app/providers/task_provider.dart';
 import 'app/providers/pomodoro_provider.dart';
 import 'app/providers/habit_provider.dart';
 import 'app/providers/dashboard_provider.dart';
+import 'app/providers/ai_notes_provider.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 
@@ -81,6 +82,10 @@ void main() async {
             provider.loadStats();
             return provider;
           },
+        ),
+        // AI Notes Management
+        ChangeNotifierProvider(
+          create: (_) => AiNotesProvider(databaseService),
         ),
       ],
       child: const StudyWarriorApp(),

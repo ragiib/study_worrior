@@ -181,14 +181,7 @@ class SettingsScreen extends StatelessWidget {
             subtitle: 'Version 1.0.0',
             trailing: null,
           ),
-          Divider(height: 32, color: Colors.grey.withAlpha(30)),
-          _SettingsTile(
-            icon: Icons.code_rounded,
-            iconColor: AppTheme.secondaryColor,
-            title: 'Built with Flutter',
-            subtitle: 'Premium study productivity app',
-            trailing: null,
-          ),
+
           Divider(height: 32, color: Colors.grey.withAlpha(30)),
           _SettingsTile(
             icon: Icons.favorite_rounded,
