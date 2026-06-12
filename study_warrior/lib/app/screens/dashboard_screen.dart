@@ -10,7 +10,6 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../providers/dashboard_provider.dart';
 import '../providers/task_provider.dart';
-import '../providers/habit_provider.dart';
 import '../theme/app_theme.dart';
 import 'detailed_stats_screen.dart';
 import 'settings_screen.dart';
@@ -49,8 +48,8 @@ class DashboardScreen extends StatelessWidget {
               _buildQuickActions(context),
               SizedBox(height: 24),
 
-              // ── Habit Progress ──────────────────────────────────────
-              _buildHabitProgress(context),
+              // ── Task Progress ──────────────────────────────────────
+              _buildTaskProgress(context),
             ],
           ),
         ),
@@ -150,7 +149,7 @@ class DashboardScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     title: 'Completed',
-                    value: '${taskProvider.completedCount}',
+                    value: '${taskProvider.completedTasksToday}',
                     subtitle: 'Tasks done',
                     icon: Icons.check_circle_outline_rounded,
                     gradient: LinearGradient(
@@ -199,7 +198,7 @@ class DashboardScreen extends StatelessWidget {
                 Expanded(
                   child: _StatCard(
                     title: 'Pending',
-                    value: '${taskProvider.pendingCount}',
+                    value: '${taskProvider.totalTasksToday - taskProvider.completedTasksToday}',
                     subtitle: 'Tasks left',
                     icon: Icons.pending_actions_rounded,
                     gradient: LinearGradient(
@@ -215,6 +214,70 @@ class DashboardScreen extends StatelessWidget {
               ],
             ),
           ],
+        );
+      },
+    );
+  }
+
+  // ── Task Progress ───────────────────────────────────────────────────
+  Widget _buildTaskProgress(BuildContext context) {
+    return Consumer<TaskProvider>(
+      builder: (context, taskProvider, _) {
+        final progress = taskProvider.todayProgress;
+        final completed = taskProvider.completedTasksToday;
+        final total = taskProvider.totalTasksToday;
+
+        if (total == 0) return SizedBox.shrink();
+
+        return Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.primary.withAlpha(20),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Today's Tasks",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Text(
+                    '$completed/$total',
+                    style: TextStyle(
+                      color: AppTheme.secondaryColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 16),
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 10,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primary.withAlpha(20),
+                  valueColor: AlwaysStoppedAnimation(AppTheme.secondaryColor),
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                taskProvider.tasks.isEmpty
+                    ? 'Add tasks to start tracking!'
+                    : '${(progress * 100).toInt()}% complete today',
+              ),
+            ],
+          ),
         );
       },
     );
@@ -439,79 +502,15 @@ class DashboardScreen extends StatelessWidget {
             SizedBox(width: 8),
             _QuickActionButton(
               icon: Icons.check_rounded,
-              label: 'Log Habit',
+              label: 'Log Task',
               color: AppTheme.accentOrange,
               onTap: () {
-                if (onNavigate != null) onNavigate!(3);
+                if (onNavigate != null) onNavigate!(1);
               },
             ),
           ],
         ),
       ],
-    );
-  }
-
-  // ── Habit Progress Summary ──────────────────────────────────────────
-  Widget _buildHabitProgress(BuildContext context) {
-    return Consumer<HabitProvider>(
-      builder: (context, habitProvider, _) {
-        return GestureDetector(
-          onTap: () {
-            if (onNavigate != null) onNavigate!(3);
-          },
-          child: Container(
-            padding: EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary.withAlpha(20),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Today's Habits",
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    Text(
-                      '${habitProvider.completedHabitsToday}/${habitProvider.totalHabitsToday}',
-                      style: TextStyle(
-                        color: AppTheme.secondaryColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: habitProvider.todayProgress,
-                    minHeight: 10,
-                    backgroundColor:
-                        Theme.of(context).colorScheme.primary.withAlpha(20),
-                    valueColor: AlwaysStoppedAnimation(AppTheme.secondaryColor),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  habitProvider.habits.isEmpty
-                      ? 'Add habits to start tracking!'
-                      : '${(habitProvider.todayProgress * 100).toInt()}% complete today',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -637,3 +636,4 @@ class _QuickActionButton extends StatelessWidget {
     );
   }
 }
+

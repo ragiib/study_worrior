@@ -5,14 +5,12 @@
 import 'dart:convert';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/task_model.dart';
-import '../models/habit_model.dart';
 import '../models/study_session_model.dart';
 import '../models/ai_note_model.dart';
 
 class DatabaseService {
   bool _initialized = false;
-  late Box<String> _tasksBox;
-  late Box<String> _habitsBox;
+  late Box<String> _habitsBox; // Used for tasks now to preserve data
   late Box<String> _sessionsBox;
   late Box<String> _aiNotesBox;
 
@@ -24,7 +22,6 @@ class DatabaseService {
     
     await Hive.initFlutter();
     
-    _tasksBox = await Hive.openBox<String>('tasks');
     _habitsBox = await Hive.openBox<String>('habits');
     _sessionsBox = await Hive.openBox<String>('sessions');
     _aiNotesBox = await Hive.openBox<String>('ai_notes');
@@ -33,65 +30,39 @@ class DatabaseService {
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  // TASK OPERATIONS
+  // TASK OPERATIONS (Formerly Habits)
   // ══════════════════════════════════════════════════════════════════════
 
   Future<List<Task>> getAllTasks() async {
     if (!_initialized) return [];
-    return _tasksBox.values.map((jsonStr) {
+    return _habitsBox.values.map((jsonStr) {
       return Task.fromMap(jsonDecode(jsonStr));
     }).toList();
   }
 
   Future<void> insertTask(Task task) async {
     if (!_initialized) return;
-    await _tasksBox.put(task.id, jsonEncode(task.toMap()));
+    await _habitsBox.put(task.id, jsonEncode(task.toMap()));
   }
 
   Future<void> updateTask(Task task) async {
     if (!_initialized) return;
-    await _tasksBox.put(task.id, jsonEncode(task.toMap()));
+    await _habitsBox.put(task.id, jsonEncode(task.toMap()));
   }
 
   Future<void> deleteTask(String id) async {
     if (!_initialized) return;
-    await _tasksBox.delete(id);
-  }
-
-  // ══════════════════════════════════════════════════════════════════════
-  // HABIT OPERATIONS
-  // ══════════════════════════════════════════════════════════════════════
-
-  Future<List<Habit>> getAllHabits() async {
-    if (!_initialized) return [];
-    return _habitsBox.values.map((jsonStr) {
-      return Habit.fromMap(jsonDecode(jsonStr));
-    }).toList();
-  }
-
-  Future<void> insertHabit(Habit habit) async {
-    if (!_initialized) return;
-    await _habitsBox.put(habit.id, jsonEncode(habit.toMap()));
-  }
-
-  Future<void> updateHabit(Habit habit) async {
-    if (!_initialized) return;
-    await _habitsBox.put(habit.id, jsonEncode(habit.toMap()));
-  }
-
-  Future<void> deleteHabit(String id) async {
-    if (!_initialized) return;
     await _habitsBox.delete(id);
   }
 
-  Future<void> toggleHabitCompletion(String habitId, DateTime date) async {
+  Future<void> toggleTaskCompletion(String taskId, DateTime date) async {
     if (!_initialized) return;
-    final jsonStr = _habitsBox.get(habitId);
+    final jsonStr = _habitsBox.get(taskId);
     if (jsonStr == null) return;
     
-    final habit = Habit.fromMap(jsonDecode(jsonStr));
-    habit.toggleCompletion(date);
-    await updateHabit(habit);
+    final task = Task.fromMap(jsonDecode(jsonStr));
+    task.toggleCompletion(date);
+    await updateTask(task);
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -172,10 +143,9 @@ class DatabaseService {
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final weekData = List<double>.filled(7, 0.0);
 
-    for (var jsonStr in _tasksBox.values) {
+    for (var jsonStr in _habitsBox.values) {
       final task = Task.fromMap(jsonDecode(jsonStr));
-      if (task.isCompleted && task.completedAt != null) {
-        final completedDay = DateTime(task.completedAt!.year, task.completedAt!.month, task.completedAt!.day);
+      for (var completedDay in task.completedDates) {
         final mondayDay = DateTime(monday.year, monday.month, monday.day);
         
         final difference = completedDay.difference(mondayDay).inDays;
@@ -193,14 +163,10 @@ class DatabaseService {
     final now = DateTime.now();
     int count = 0;
     
-    for (var jsonStr in _tasksBox.values) {
+    for (var jsonStr in _habitsBox.values) {
       final task = Task.fromMap(jsonDecode(jsonStr));
-      if (task.isCompleted && task.completedAt != null) {
-        if (task.completedAt!.year == now.year &&
-            task.completedAt!.month == now.month &&
-            task.completedAt!.day == now.day) {
-          count++;
-        }
+      if (task.isCompletedOn(now)) {
+        count++;
       }
     }
     return count;

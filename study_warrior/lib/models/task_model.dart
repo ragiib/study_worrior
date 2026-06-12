@@ -1,92 +1,89 @@
 // ============================================================================
-// Task Model - Represents a study task with priority and due date
+// Task Model - Represents a recurring task with streak tracking
 // ============================================================================
-
-enum TaskPriority { low, medium, high }
 
 class Task {
   final String id;
-  String title;
+  String name;
   String description;
-  TaskPriority priority;
-  DateTime? dueDate;
-  bool isCompleted;
+  String emoji;
+  int currentStreak;
+  int longestStreak;
+  List<DateTime> completedDates; // Dates when habit was completed
+  List<int> scheduledDays; // 1 (Mon) to 7 (Sun)
   DateTime createdAt;
-  DateTime? completedAt;
 
   Task({
     required this.id,
-    required this.title,
+    required this.name,
     this.description = '',
-    this.priority = TaskPriority.medium,
-    this.dueDate,
-    this.isCompleted = false,
+    this.emoji = '📚',
+    this.currentStreak = 0,
+    this.longestStreak = 0,
+    List<DateTime>? completedDates,
+    List<int>? scheduledDays,
     DateTime? createdAt,
-    this.completedAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+  })  : completedDates = completedDates ?? [],
+        scheduledDays = scheduledDays ?? [1, 2, 3, 4, 5, 6, 7],
+        createdAt = createdAt ?? DateTime.now();
+
+  // ── Check if task is completed for a specific date ─────────────────
+  bool isCompletedOn(DateTime date) {
+    return completedDates.any(
+      (d) => d.year == date.year && d.month == date.month && d.day == date.day,
+    );
+  }
+
+  // ── Check if task is scheduled for a specific date ─────────────────
+  bool isScheduledFor(DateTime date) {
+    return scheduledDays.contains(date.weekday);
+  }
+
+  // ── Check if completed today ────────────────────────────────────────
+  bool get isCompletedToday => isCompletedOn(DateTime.now());
 
   // ── Database Serialization ──────────────────────────────────────────
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'title': title,
+      'name': name,
       'description': description,
-      'priority': priority.index,
-      'dueDate': dueDate?.millisecondsSinceEpoch,
-      'isCompleted': isCompleted ? 1 : 0,
+      'emoji': emoji,
+      'currentStreak': currentStreak,
+      'longestStreak': longestStreak,
       'createdAt': createdAt.millisecondsSinceEpoch,
-      'completedAt': completedAt?.millisecondsSinceEpoch,
+      'completedDates': completedDates.map((d) => d.millisecondsSinceEpoch).toList(),
+      'scheduledDays': scheduledDays,
     };
   }
 
   factory Task.fromMap(Map<String, dynamic> map) {
     return Task(
       id: map['id'] as String,
-      title: map['title'] as String,
+      name: map['name'] as String,
       description: map['description'] as String? ?? '',
-      priority: TaskPriority.values[map['priority'] as int],
-      dueDate: map['dueDate'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['dueDate'] as int)
-          : null,
-      isCompleted: (map['isCompleted'] as int) == 1,
+      emoji: map['emoji'] as String? ?? '📚',
+      currentStreak: map['currentStreak'] as int? ?? 0,
+      longestStreak: map['longestStreak'] as int? ?? 0,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-      completedAt: map['completedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['completedAt'] as int)
-          : null,
+      completedDates: (map['completedDates'] as List<dynamic>?)
+          ?.map((e) => DateTime.fromMillisecondsSinceEpoch(e as int))
+          .toList() ?? [],
+      scheduledDays: (map['scheduledDays'] as List<dynamic>?)
+          ?.map((e) => e as int)
+          .toList() ?? [1, 2, 3, 4, 5, 6, 7],
     );
   }
 
-  // Priority label for display
-  String get priorityLabel {
-    switch (priority) {
-      case TaskPriority.low:
-        return 'Low';
-      case TaskPriority.medium:
-        return 'Medium';
-      case TaskPriority.high:
-        return 'High';
+  void toggleCompletion(DateTime date) {
+    final existingIndex = completedDates.indexWhere(
+      (d) => d.year == date.year && d.month == date.month && d.day == date.day,
+    );
+
+    if (existingIndex >= 0) {
+      completedDates.removeAt(existingIndex);
+    } else {
+      completedDates.add(date);
     }
-  }
-
-  Task copyWith({
-    String? title,
-    String? description,
-    TaskPriority? priority,
-    DateTime? dueDate,
-    bool? isCompleted,
-    DateTime? completedAt,
-    bool clearDueDate = false,
-    bool clearCompletedAt = false,
-  }) {
-    return Task(
-      id: id,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      priority: priority ?? this.priority,
-      dueDate: clearDueDate ? null : (dueDate ?? this.dueDate),
-      isCompleted: isCompleted ?? this.isCompleted,
-      createdAt: createdAt,
-      completedAt: clearCompletedAt ? null : (completedAt ?? this.completedAt),
-    );
   }
 }

@@ -17,7 +17,7 @@ class AiNotesProvider extends ChangeNotifier {
   List<AiNote> _notes = [];
   List<AiNote> get notes => _notes;
 
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   List<XFile> get selectedImages => _selectedImages;
 
   bool _isProcessing = false;

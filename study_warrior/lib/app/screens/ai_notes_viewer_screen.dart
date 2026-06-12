@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../models/ai_note_model.dart';
 import '../providers/ai_notes_provider.dart';
@@ -127,6 +127,20 @@ class _AiNotesViewerScreenState extends State<AiNotesViewerScreen> {
             : Markdown(
                 data: widget.note.content,
                 selectable: true,
+                onTapLink: (text, href, title) async {
+                  if (href != null) {
+                    final uri = Uri.parse(href);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Could not open link: $href')),
+                        );
+                      }
+                    }
+                  }
+                },
                 styleSheet: MarkdownStyleSheet(
                   h1: const TextStyle(color: AppTheme.primaryColor, fontWeight: FontWeight.bold),
                   h2: const TextStyle(color: AppTheme.secondaryColor, fontWeight: FontWeight.bold),

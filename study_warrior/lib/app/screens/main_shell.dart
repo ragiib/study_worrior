@@ -12,7 +12,6 @@ import '../providers/dashboard_provider.dart';
 import 'dashboard_screen.dart';
 import 'tasks_screen.dart';
 import 'pomodoro_screen.dart';
-import 'habits_screen.dart';
 import 'premium_ai_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -31,7 +30,6 @@ class _MainShellState extends State<MainShell> {
     ),
     const TasksScreen(),
     const PomodoroScreen(),
-    const HabitsScreen(),
     const PremiumAiScreen(),
   ];
 
@@ -74,7 +72,6 @@ class _MainShellState extends State<MainShell> {
             _buildNavItem(Icons.dashboard_rounded, 'Dashboard'),
             _buildNavItem(Icons.task_alt_rounded, 'Tasks'),
             _buildNavItem(Icons.timer_rounded, 'Timer'),
-            _buildNavItem(Icons.auto_awesome_rounded, 'Habits'),
             _buildNavItem(Icons.workspace_premium_rounded, 'Premium AI'),
           ],
         ),

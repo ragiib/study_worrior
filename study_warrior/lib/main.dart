@@ -13,7 +13,6 @@ import 'app/app.dart';
 import 'app/providers/theme_provider.dart';
 import 'app/providers/task_provider.dart';
 import 'app/providers/pomodoro_provider.dart';
-import 'app/providers/habit_provider.dart';
 import 'app/providers/dashboard_provider.dart';
 import 'app/providers/ai_notes_provider.dart';
 import 'services/database_service.dart';
@@ -55,23 +54,15 @@ void main() async {
       providers: [
         // Theme management (dark/light mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        // Task management with database persistence
-        ChangeNotifierProvider(
-          create: (_) {
-            final provider = TaskProvider(databaseService);
-            provider.loadTasks();
-            return provider;
-          },
-        ),
         // Pomodoro timer with notification support
         ChangeNotifierProvider(
           create: (_) => PomodoroProvider(notificationService, databaseService),
         ),
-        // Habit tracking with streaks
+        // Task tracking with streaks and weekly schedule
         ChangeNotifierProvider(
           create: (_) {
-            final provider = HabitProvider(databaseService);
-            provider.loadHabits();
+            final provider = TaskProvider(databaseService);
+            provider.loadTasks();
             return provider;
           },
         ),
