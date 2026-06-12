@@ -22,6 +22,7 @@ class _HabitsScreenState extends State<HabitsScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
   String? _selectedHabitId; // Track which habit's calendar to show
+  bool _showOnlyToday = true;
 
   @override
   Widget build(BuildContext context) {
@@ -55,25 +56,57 @@ class _HabitsScreenState extends State<HabitsScreen> {
                 ),
                 SizedBox(height: 20),
 
+                // ── Toggle Switch ───────────────────────────────────────────
+                Row(
+                  children: [
+                    _buildToggleChip('Today', _showOnlyToday, () {
+                      setState(() => _showOnlyToday = true);
+                    }),
+                    SizedBox(width: 8),
+                    _buildToggleChip('All Habits', !_showOnlyToday, () {
+                      setState(() => _showOnlyToday = false);
+                    }),
+                  ],
+                ),
+                SizedBox(height: 20),
+
                 // ── Habit List & Calendar ────────────────────────────────
             Expanded(
               child: Consumer<HabitProvider>(
                 builder: (context, habitProvider, _) {
-                  if (habitProvider.habits.isEmpty) {
+                  var displayHabits = habitProvider.habits;
+                  if (_showOnlyToday) {
+                    displayHabits = displayHabits
+                        .where((h) => h.isScheduledFor(DateTime.now()))
+                        .toList();
+                  }
+
+                  if (displayHabits.isEmpty) {
                     return _buildEmptyState(context);
                   }
 
                   return ListView(
                     children: [
                       // Habits list
-                      ...habitProvider.habits.map(
+                      ...displayHabits.map(
                         (habit) => _HabitCard(
                           habit: habit,
                           isSelected: _selectedHabitId == habit.id,
-                          onToggle: () =>
-                              habitProvider.toggleHabitToday(habit.id),
-                          onDelete: () =>
-                              habitProvider.deleteHabit(habit.id),
+                          onToggle: () {
+                            if (habit.isScheduledFor(DateTime.now())) {
+                              habitProvider.toggleHabitToday(habit.id);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('This habit is not scheduled for today.'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          onDelete: () => habitProvider.deleteHabit(habit.id),
+                          onEdit: () => _showHabitDialog(context, habit),
                           onTapCalendar: () {
                             setState(() {
                               _selectedHabitId =
@@ -102,11 +135,34 @@ class _HabitsScreenState extends State<HabitsScreen> {
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
-              onPressed: () => _showAddHabitDialog(context),
+              onPressed: () => _showHabitDialog(context),
               child: Icon(Icons.add_rounded, size: 28),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildToggleChip(String label, bool isSelected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryColor : Colors.grey.withAlpha(60),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }
@@ -247,6 +303,15 @@ class _HabitsScreenState extends State<HabitsScreen> {
                       ),
                     ),
                   );
+                } else if (!habit.isScheduledFor(day)) {
+                  return Center(
+                    child: Text(
+                      '${day.day}',
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(80),
+                      ),
+                    ),
+                  );
                 }
                 return null;
               },
@@ -257,15 +322,20 @@ class _HabitsScreenState extends State<HabitsScreen> {
     );
   }
 
-  // ── Add Habit Dialog ────────────────────────────────────────────────
-  void _showAddHabitDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    String selectedEmoji = '📚';
+  // ── Add/Edit Habit Dialog ───────────────────────────────────────────
+  void _showHabitDialog(BuildContext context, [Habit? habit]) {
+    final isEditing = habit != null;
+    final nameController = TextEditingController(text: isEditing ? habit.name : '');
+    final descController = TextEditingController(text: isEditing ? habit.description : '');
+    String selectedEmoji = isEditing ? habit.emoji : '📚';
+    List<int> selectedDays = isEditing ? List.from(habit.scheduledDays) : [1, 2, 3, 4, 5, 6, 7];
 
     final emojis = [
       '📚', '💪', '🧘', '🏃', '💧', '🎯', '✍️', '🎵',
       '🌅', '📖', '🧠', '🍎', '😴', '🔬', '💻', '🎨',
     ];
+
+    final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     showModalBottomSheet(
       context: context,
@@ -274,105 +344,174 @@ class _HabitsScreenState extends State<HabitsScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
-            return Container(
-              padding: EdgeInsets.only(
-                top: 24,
-                left: 24,
-                right: 24,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              ),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withAlpha(80),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Text(
-                    'New Habit',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  SizedBox(height: 20),
-                  TextField(
-                    controller: nameController,
-                    decoration: InputDecoration(hintText: 'Habit name'),
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
-                  SizedBox(height: 16),
-                  Text('Choose an emoji',
-                      style: Theme.of(context).textTheme.labelLarge),
-                  SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: emojis.map((emoji) {
-                      final isSelected = emoji == selectedEmoji;
-                      return GestureDetector(
-                        onTap: () => setState(() => selectedEmoji = emoji),
+            final bottomInset = MediaQuery.of(ctx).viewInsets.bottom;
+            return AnimatedPadding(
+              duration: Duration(milliseconds: 100),
+              padding: EdgeInsets.only(bottom: bottomInset),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(24, 24, 24, 24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
                         child: Container(
-                          width: 44,
-                          height: 44,
+                          width: 40,
+                          height: 4,
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppTheme.primaryColor.withAlpha(30)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppTheme.primaryColor
-                                  : Colors.grey.withAlpha(40),
+                            color: Colors.grey.withAlpha(80),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        isEditing ? 'Edit Habit' : 'New Habit',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      SizedBox(height: 20),
+                      TextField(
+                        controller: nameController,
+                        decoration: InputDecoration(hintText: 'Habit name'),
+                        textCapitalization: TextCapitalization.sentences,
+                      ),
+                      SizedBox(height: 12),
+                      TextField(
+                        controller: descController,
+                        decoration: InputDecoration(
+                          hintText: 'Description (optional)',
+                          hintStyle: TextStyle(fontSize: 14),
+                        ),
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 2,
+                        minLines: 1,
+                      ),
+                      SizedBox(height: 16),
+                      
+                      // Weekday Selector
+                      Text('Scheduled Days', style: Theme.of(context).textTheme.labelLarge),
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: List.generate(7, (index) {
+                          final dayNum = index + 1;
+                          final isSelected = selectedDays.contains(dayNum);
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (isSelected && selectedDays.length > 1) {
+                                  selectedDays.remove(dayNum);
+                                } else if (!isSelected) {
+                                  selectedDays.add(dayNum);
+                                }
+                              });
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppTheme.primaryColor : Colors.transparent,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected ? AppTheme.primaryColor : Colors.grey.withAlpha(60),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  weekdays[index],
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyMedium?.color,
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                      
+                      SizedBox(height: 16),
+                      Text('Choose an emoji', style: Theme.of(context).textTheme.labelLarge),
+                      SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: emojis.map((emoji) {
+                          final isSelected = emoji == selectedEmoji;
+                          return GestureDetector(
+                            onTap: () => setState(() => selectedEmoji = emoji),
+                            child: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppTheme.primaryColor.withAlpha(30)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppTheme.primaryColor
+                                      : Colors.grey.withAlpha(40),
+                                ),
+                              ),
+                              child: Center(
+                                child: Text(emoji, style: TextStyle(fontSize: 22)),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (nameController.text.trim().isEmpty) return;
+                            
+                            if (isEditing) {
+                              habit.name = nameController.text.trim();
+                              habit.description = descController.text.trim();
+                              habit.emoji = selectedEmoji;
+                              habit.scheduledDays = selectedDays;
+                              Provider.of<HabitProvider>(context, listen: false).updateHabit(habit);
+                            } else {
+                              Provider.of<HabitProvider>(context, listen: false).addHabit(
+                                name: nameController.text.trim(),
+                                description: descController.text.trim(),
+                                emoji: selectedEmoji,
+                                scheduledDays: selectedDays,
+                              );
+                            }
+                            Navigator.pop(ctx);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
                           ),
-                          child: Center(
-                            child: Text(emoji, style: TextStyle(fontSize: 22)),
+                          child: Text(
+                            isEditing ? 'Save Changes' : 'Add Habit',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      );
-                    }).toList(),
-                  ),
-                  SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (nameController.text.trim().isEmpty) return;
-                        Provider.of<HabitProvider>(context, listen: false)
-                            .addHabit(
-                          name: nameController.text.trim(),
-                          emoji: selectedEmoji,
-                        );
-                        Navigator.pop(ctx);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
                       ),
-                      child: Text(
-                        'Add Habit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             );
           },
@@ -390,6 +529,7 @@ class _HabitCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onToggle;
   final VoidCallback onDelete;
+  final VoidCallback onEdit;
   final VoidCallback onTapCalendar;
 
   const _HabitCard({
@@ -397,11 +537,14 @@ class _HabitCard extends StatelessWidget {
     required this.isSelected,
     required this.onToggle,
     required this.onDelete,
+    required this.onEdit,
     required this.onTapCalendar,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isScheduledToday = habit.isScheduledFor(DateTime.now());
+
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
@@ -426,110 +569,158 @@ class _HabitCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: habit.isCompletedToday
                     ? AppTheme.secondaryColor.withAlpha(25)
-                    : Colors.transparent,
+                    : isScheduledToday ? Colors.transparent : Colors.grey.withAlpha(20),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color: habit.isCompletedToday
                       ? AppTheme.secondaryColor
-                      : Colors.grey.withAlpha(60),
+                      : isScheduledToday ? Colors.grey.withAlpha(60) : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: Center(
                 child: Text(
                   habit.emoji,
-                  style: TextStyle(fontSize: 22),
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: isScheduledToday ? null : Colors.grey.withAlpha(100),
+                  ),
                 ),
               ),
             ),
           ),
           SizedBox(width: 14),
-          // Habit details
+          // Habit details (Tappable to show Calendar)
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  habit.name,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    decoration: habit.isCompletedToday
-                        ? TextDecoration.lineThrough
-                        : null,
+            child: GestureDetector(
+              onTap: onTapCalendar,
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    habit.name,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      decoration: habit.isCompletedToday
+                          ? TextDecoration.lineThrough
+                          : null,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.local_fire_department_rounded,
-                        size: 14, color: AppTheme.accentOrange),
-                    SizedBox(width: 4),
+                  if (habit.description.isNotEmpty) ...[
+                    SizedBox(height: 2),
                     Text(
-                      '${habit.currentStreak} day streak',
+                      habit.description,
                       style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.accentOrange,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha(150),
                       ),
-                    ),
-                    SizedBox(width: 12),
-                    Icon(Icons.emoji_events_rounded,
-                        size: 14, color: AppTheme.accentYellow),
-                    SizedBox(width: 4),
-                    Text(
-                      'Best: ${habit.longestStreak}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).textTheme.bodySmall?.color,
-                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
-                ),
-              ],
+                  SizedBox(height: 4),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.local_fire_department_rounded,
+                              size: 14, color: AppTheme.accentOrange),
+                          SizedBox(width: 4),
+                          Text(
+                            '${habit.currentStreak} day streak',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.accentOrange,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.emoji_events_rounded,
+                              size: 14, color: AppTheme.accentYellow),
+                          SizedBox(width: 4),
+                          Text(
+                            'Best: ${habit.longestStreak}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          // Calendar button
-          IconButton(
-            onPressed: onTapCalendar,
+          // More actions menu
+          PopupMenuButton<String>(
+            padding: EdgeInsets.zero,
             icon: Icon(
-              Icons.calendar_month_rounded,
-              color: isSelected
-                  ? AppTheme.primaryColor
-                  : Theme.of(context).textTheme.bodySmall?.color,
-            ),
-          ),
-          // Delete button
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text('Delete Habit'),
-                  content: Text(
-                      'Are you sure you want to delete "${habit.name}"?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        onDelete();
-                        Navigator.pop(ctx);
-                      },
-                      child: Text('Delete',
-                          style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
-            },
-            icon: Icon(
-              Icons.delete_outline_rounded,
+              Icons.more_vert_rounded,
               size: 20,
               color: Theme.of(context).textTheme.bodySmall?.color,
             ),
+            onSelected: (value) {
+              if (value == 'edit') {
+                onEdit();
+              } else if (value == 'delete') {
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Text('Delete Habit'),
+                    content: Text(
+                        'Are you sure you want to delete "${habit.name}"?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          onDelete();
+                          Navigator.pop(ctx);
+                        },
+                        child: Text('Delete',
+                            style: TextStyle(color: Colors.red)),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_rounded, size: 18),
+                    SizedBox(width: 8),
+                    Text('Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),

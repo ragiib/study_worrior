@@ -17,13 +17,14 @@ class HabitProvider extends ChangeNotifier {
 
   List<Habit> get habits => _habits;
 
-  int get totalHabitsToday => _habits.length;
+  int get totalHabitsToday => _habits.where((h) => h.isScheduledFor(DateTime.now())).length;
   int get completedHabitsToday =>
-      _habits.where((h) => h.isCompletedToday).length;
+      _habits.where((h) => h.isScheduledFor(DateTime.now()) && h.isCompletedToday).length;
 
   double get todayProgress {
-    if (_habits.isEmpty) return 0;
-    return completedHabitsToday / totalHabitsToday;
+    final total = totalHabitsToday;
+    if (total == 0) return 0;
+    return completedHabitsToday / total;
   }
 
   // ── Load habits from database ───────────────────────────────────────
@@ -34,15 +35,33 @@ class HabitProvider extends ChangeNotifier {
   }
 
   // ── Add new habit ───────────────────────────────────────────────────
-  Future<void> addHabit({required String name, String emoji = '📚'}) async {
+  Future<void> addHabit({
+    required String name,
+    String description = '',
+    String emoji = '📚',
+    List<int> scheduledDays = const [1, 2, 3, 4, 5, 6, 7],
+  }) async {
     final habit = Habit(
       id: const Uuid().v4(),
       name: name,
+      description: description,
       emoji: emoji,
+      scheduledDays: scheduledDays,
     );
     await _db.insertHabit(habit);
     _habits.insert(0, habit);
     notifyListeners();
+  }
+
+  // ── Update habit ────────────────────────────────────────────────────
+  Future<void> updateHabit(Habit habit) async {
+    await _db.updateHabit(habit);
+    final index = _habits.indexWhere((h) => h.id == habit.id);
+    if (index != -1) {
+      _habits[index] = habit;
+      _recalculateStreaks();
+      notifyListeners();
+    }
   }
 
   // ── Delete habit ────────────────────────────────────────────────────
@@ -79,15 +98,30 @@ class HabitProvider extends ChangeNotifier {
       int streak = 0;
       DateTime checkDate = DateTime.now();
 
-      // Check today first
-      if (!habit.isCompletedOn(checkDate)) {
-        // Allow checking from yesterday if today isn't done yet
+      // Skip today if it's not scheduled, or if it's scheduled but not yet completed
+      if (!habit.isScheduledFor(checkDate) || !habit.isCompletedOn(checkDate)) {
         checkDate = checkDate.subtract(Duration(days: 1));
       }
 
-      while (habit.isCompletedOn(checkDate)) {
+      while (true) {
+        if (!habit.isScheduledFor(checkDate)) {
+          // Skip days where the habit is not scheduled
+          checkDate = checkDate.subtract(Duration(days: 1));
+          continue;
+        }
+
+        if (habit.isCompletedOn(checkDate)) {
+          streak++;
+          checkDate = checkDate.subtract(Duration(days: 1));
+        } else {
+          // Missed a scheduled day! Streak broken.
+          break;
+        }
+      }
+
+      // Add 1 if today was completed
+      if (habit.isScheduledFor(DateTime.now()) && habit.isCompletedToday) {
         streak++;
-        checkDate = checkDate.subtract(Duration(days: 1));
       }
 
       habit.currentStreak = streak;
