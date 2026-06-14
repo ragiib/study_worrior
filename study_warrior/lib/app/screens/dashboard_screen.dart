@@ -516,14 +516,6 @@ class DashboardScreen extends StatelessWidget {
               'Quick Actions',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            TextButton.icon(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedNotesScreen()));
-              },
-              icon: const Icon(Icons.library_books, size: 16),
-              label: const Text('Saved Notes'),
-              style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
-            ),
           ],
         ),
         SizedBox(height: 12),

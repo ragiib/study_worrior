@@ -8,6 +8,7 @@ import '../../models/ai_note_model.dart';
 import '../providers/ai_notes_provider.dart';
 import '../theme/app_theme.dart';
 import 'ai_notes_viewer_screen.dart';
+import 'saved_notes_screen.dart';
 
 class AiNotesGeneratorScreen extends StatefulWidget {
   const AiNotesGeneratorScreen({super.key});
@@ -67,6 +68,19 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
         title: const Text('AI Notes Generator'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.library_books),
+            tooltip: 'Saved Notes',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SavedNotesScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Consumer<AiNotesProvider>(
         builder: (context, provider, _) {
