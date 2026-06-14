@@ -10,6 +10,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../providers/task_provider.dart';
 import '../../models/task_model.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 
 class TasksScreen extends StatefulWidget {
   const TasksScreen({super.key});
@@ -35,24 +36,11 @@ class _TasksScreenState extends State<TasksScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Header ──────────────────────────────────────────────
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Task Tracker',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'Build consistency daily',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ],
+                const PremiumPageHeader(
+                  topLabel: 'Task Tracker',
+                  emoji: '📋',
+                  title: 'Daily Tasks',
+                  subtitle: 'Build consistency daily',
                 ),
                 SizedBox(height: 20),
 

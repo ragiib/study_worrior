@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/ai_note_model.dart';
 import '../providers/ai_notes_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 import 'ai_notes_viewer_screen.dart';
 import 'saved_notes_screen.dart';
 
@@ -65,7 +66,6 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Notes Generator'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -103,8 +103,15 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                const PremiumPageHeader(
+                  topLabel: 'AI Notes',
+                  emoji: '🧠',
+                  title: 'Generator',
+                  subtitle: 'Create smart study materials in seconds.',
+                ),
+                const SizedBox(height: 24),
                 Text(
                   '1. Select Images',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),

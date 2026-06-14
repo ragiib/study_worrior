@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/pomodoro_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 
 class PomodoroScreen extends StatelessWidget {
   const PomodoroScreen({super.key});
@@ -24,17 +25,14 @@ class PomodoroScreen extends StatelessWidget {
             return Column(
               children: [
                 // ── Header ────────────────────────────────────────────
-                SizedBox(height: 10),
-                Text(
-                  pomodoro.isBreak ? 'Break Time ☕' : 'Focus Mode 🎯',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  pomodoro.isBreak
+                const SizedBox(height: 10),
+                PremiumPageHeader(
+                  topLabel: pomodoro.isBreak ? 'Break Time' : 'Focus Mode',
+                  emoji: pomodoro.isBreak ? '☕' : '🎯',
+                  title: 'Pomodoro',
+                  subtitle: pomodoro.isBreak
                       ? 'Take a well-deserved rest'
                       : 'Stay focused, warrior!',
-                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 SizedBox(height: 40),
 

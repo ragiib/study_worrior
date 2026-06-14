@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import '../widgets/premium_page_header.dart';
 
 class DetailedStatsScreen extends StatelessWidget {
   final String title;
@@ -31,25 +32,19 @@ class DetailedStatsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Weekly Analysis',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodyMedium,
+              PremiumPageHeader(
+                topLabel: 'Analytics',
+                emoji: '📈',
+                title: title,
+                subtitle: description,
               ),
               const SizedBox(height: 32),
               Expanded(

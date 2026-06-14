@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/ai_notes_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 import 'ai_notes_viewer_screen.dart';
 
 class SavedNotesScreen extends StatefulWidget {
@@ -19,7 +20,6 @@ class _SavedNotesScreenState extends State<SavedNotesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Saved AI Notes'),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -32,8 +32,14 @@ class _SavedNotesScreenState extends State<SavedNotesScreen> {
 
           return Column(
             children: [
+              const PremiumPageHeader(
+                topLabel: 'Your Library',
+                emoji: '📚',
+                title: 'Saved Notes',
+                subtitle: 'Access your generated AI notes.',
+              ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 child: TextField(
                   decoration: InputDecoration(
                     hintText: 'Search notes...',

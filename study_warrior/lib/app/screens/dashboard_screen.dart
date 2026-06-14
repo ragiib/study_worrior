@@ -11,6 +11,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/task_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 import 'detailed_stats_screen.dart';
 import 'settings_screen.dart';
 import 'saved_notes_screen.dart';
@@ -78,66 +79,11 @@ class DashboardScreen extends StatelessWidget {
       child: Stack(
         alignment: Alignment.topCenter,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withAlpha(15),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withAlpha(30),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      greeting.toUpperCase(),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1.2,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              ShaderMask(
-                blendMode: BlendMode.srcIn,
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6), Color(0xFF0EA5E9)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-                child: Text(
-                  'STUDY WARRIOR',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        fontSize: 34,
-                      ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Your journey to excellence starts here',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface.withAlpha(120),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
+          PremiumPageHeader(
+            topLabel: greeting,
+            emoji: emoji,
+            title: 'Study Warrior',
+            subtitle: 'Your journey to excellence starts here',
           ),
           Positioned(
             right: 0,

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../models/user_model.dart';
+import '../theme/app_theme.dart';
 import '../widgets/premium_feature_card.dart';
+import '../widgets/premium_page_header.dart';
 import 'ai_notes_generator_screen.dart';
 import 'premium_upgrade_screen.dart';
 
@@ -33,41 +36,11 @@ class PremiumAiScreen extends StatelessWidget {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF8B5CF6), Color(0xFF6D28D9)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Premium Tools',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Supercharge your learning with AI-powered tools.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
+              child: const PremiumPageHeader(
+                topLabel: 'Premium Tools',
+                emoji: '✨',
+                title: 'AI Assistant',
+                subtitle: 'Supercharge your learning with AI-powered tools.',
               ),
             ),
           ),

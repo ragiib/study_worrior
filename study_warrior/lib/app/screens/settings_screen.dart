@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -20,14 +21,11 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Settings',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Customize your experience',
-              style: Theme.of(context).textTheme.bodyMedium,
+            const PremiumPageHeader(
+              topLabel: 'Preferences',
+              emoji: '⚙️',
+              title: 'Settings',
+              subtitle: 'Customize your experience',
             ),
             SizedBox(height: 28),
 

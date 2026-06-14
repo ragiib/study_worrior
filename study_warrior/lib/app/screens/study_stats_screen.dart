@@ -8,6 +8,7 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../providers/dashboard_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_page_header.dart';
 
 class StudyStatsScreen extends StatelessWidget {
   const StudyStatsScreen({super.key});
@@ -16,25 +17,19 @@ class StudyStatsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Study Hours Overview'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Weekly Analysis',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'See how your study hours fluctuate over the week.',
-                style: Theme.of(context).textTheme.bodyMedium,
+              const PremiumPageHeader(
+                topLabel: 'Weekly Analysis',
+                emoji: '📊',
+                title: 'Study Hours',
+                subtitle: 'See how your study hours fluctuate over the week.',
               ),
               const SizedBox(height: 32),
               Expanded(
