@@ -73,60 +73,92 @@ class DashboardScreen extends StatelessWidget {
       emoji = '🌙';
     }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 20),
+    return SizedBox(
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withAlpha(15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withAlpha(30),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  greeting,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withAlpha(160),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      greeting.toUpperCase(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6), Color(0xFF0EA5E9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
+                child: Text(
+                  'STUDY WARRIOR',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                        fontSize: 34,
                       ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            ShaderMask(
-              blendMode: BlendMode.srcIn,
-              shaderCallback: (bounds) => const LinearGradient(
-                colors: [Color(0xFF8B5CF6), Color(0xFF0EA5E9)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(Rect.fromLTWH(0, 0, bounds.width, bounds.height)),
-              child: Text(
-                'Study Warrior',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      fontSize: 32,
-                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your journey to excellence starts here',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withAlpha(120),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+          Positioned(
+            right: 0,
+            top: 0,
+            child: IconButton(
+              onPressed: () {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+              },
+              icon: const Icon(Icons.settings_outlined),
+              style: IconButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                shape: CircleBorder(
+                  side: BorderSide(
+                    color: Theme.of(context).colorScheme.onSurface.withAlpha(20),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
-        IconButton(
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-          },
-          icon: const Icon(Icons.settings_rounded),
-          style: IconButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary.withAlpha(20),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
