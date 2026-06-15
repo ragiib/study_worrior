@@ -49,11 +49,18 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
       final error = provider.lastError ?? 'Unknown error. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: $error'),
-          duration: const Duration(seconds: 8),
-          backgroundColor: Colors.red.shade700,
+          content: Text(
+            error.contains('CORS_ERROR') || error.contains('OCR_UNSUPPORTED') || error.contains('EMPTY_OCR') || error.contains('OLLAMA_') 
+                ? error 
+                : 'Error: $error',
+            style: const TextStyle(height: 1.4),
+          ),
+          duration: const Duration(seconds: 15),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          backgroundColor: Colors.red.shade800,
           action: SnackBarAction(
-            label: 'OK',
+            label: 'DISMISS',
             textColor: Colors.white,
             onPressed: () {},
           ),

@@ -107,8 +107,12 @@ class AiNotesProvider extends ChangeNotifier {
       return newNote;
 
     } catch (e) {
-      _lastError = e.toString();
-      debugPrint('Error generating notes: $e');
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11); // Remove 'Exception: '
+      }
+      _lastError = errorMessage;
+      debugPrint('AiNotesProvider: Error generating notes: $errorMessage');
       return null;
     } finally {
       _isProcessing = false;
