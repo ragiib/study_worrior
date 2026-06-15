@@ -14,6 +14,7 @@ echo.
 echo Starting server...
 echo.
 
-flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+cd /d "%~dp0"
+C:\flutter\bin\flutter.bat run -d web-server --web-hostname 0.0.0.0 --web-port 8080
 
 pause
