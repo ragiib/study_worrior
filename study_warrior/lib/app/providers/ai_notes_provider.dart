@@ -4,14 +4,14 @@ import 'package:uuid/uuid.dart';
 
 import '../../models/ai_note_model.dart';
 import '../../services/ai/ai_provider.dart';
-import '../../services/ai/gemini_ai_provider.dart';
+import '../../services/ai/ollama_ai_provider.dart';
 import '../../services/ocr_service.dart';
 import '../../services/database_service.dart';
 
 class AiNotesProvider extends ChangeNotifier {
   final DatabaseService _dbService;
   final OcrService _ocrService = OcrService();
-  final AiProvider _aiProvider = GeminiAiProvider();
+  final AiProvider _aiProvider = OllamaAiProvider();
   final _uuid = const Uuid();
 
   List<AiNote> _notes = [];

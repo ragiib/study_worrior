@@ -6,5 +6,5 @@
 // ============================================================================
 
 class ApiConfig {
-  static const String geminiApiKey = 'YOUR_API_KEY_HERE';
+  // Add other API keys here if needed
 }
