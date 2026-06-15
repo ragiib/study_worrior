@@ -16,7 +16,8 @@ class OllamaAiProvider implements AiProvider {
 
   String get _baseUrl {
     if (kIsWeb) {
-      return 'http://127.0.0.1:11434/api/generate';
+      // Use your PC's local IP address so smartphones can reach Ollama over Wi-Fi
+      return 'http://10.255.96.164:11434/api/generate';
     }
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:11434/api/generate';
