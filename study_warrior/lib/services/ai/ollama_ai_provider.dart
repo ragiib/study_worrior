@@ -66,13 +66,14 @@ class OllamaAiProvider implements AiProvider {
       debugPrint('OllamaAiProvider Exception: $e');
       final errorStr = e.toString();
       
-      // Catch common web CORS errors
-      if (kIsWeb && errorStr.contains('XMLHttpRequest error')) {
+      // Catch common web CORS and network errors
+      if (kIsWeb && (errorStr.contains('XMLHttpRequest error') || errorStr.contains('Failed to fetch'))) {
         throw Exception(
-          'CORS_ERROR: Ollama blocked the request.\n\n'
-          'To fix this, you must set an environment variable on your PC:\n'
-          '1. Set OLLAMA_ORIGINS="*" in Windows Environment Variables.\n'
-          '2. Completely quit Ollama from the system tray and restart it.'
+          'CORS_ERROR: Your browser blocked the connection to Ollama.\n\n'
+          'To fix this forever:\n'
+          '1. Search for "Environment Variables" in Windows Start Menu.\n'
+          '2. Add a new System Variable: Name=OLLAMA_ORIGINS Value=*\n'
+          '3. Fully quit Ollama (right-click its icon in the system tray -> Quit) and start it again.'
         );
       }
       
