@@ -27,7 +27,7 @@ class OcrService {
     if (kIsWeb) {
       debugPrint('OcrService: Web platform detected. Simulating OCR.');
       await Future.delayed(const Duration(seconds: 1));
-      return "Simulated OCR text for web. Google ML Kit is not supported on the web platform.";
+      return "Biology Chapter 4: Cell Structure.\nThe cell is the basic structural, functional, and biological unit of all known organisms. Cells are the smallest units of life. Mitochondria are the powerhouses of the cell, generating most of the chemical energy needed to power the cell's biochemical reactions.";
     }
 
     if (!isSupportedPlatform) {
