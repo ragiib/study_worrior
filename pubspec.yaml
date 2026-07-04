@@ -38,6 +38,9 @@ dependencies:
   flutter_image_compress: ^2.4.0
   flutter_markdown: ^0.7.7+1
   url_launcher: ^6.3.2
+  file_picker: ^11.0.2
+  path_provider: ^2.1.6
+  syncfusion_flutter_pdfviewer: ^33.2.13
 
 dev_dependencies:
   flutter_test:

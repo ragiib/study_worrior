@@ -468,40 +468,19 @@ class DashboardScreen extends StatelessWidget {
         Row(
           children: [
             _QuickActionButton(
-              icon: Icons.workspace_premium_rounded,
-              label: 'Premium Tools',
-              color: Colors.purpleAccent,
+              icon: Icons.local_library_rounded,
+              label: 'Library',
+              color: Colors.blueAccent, // Or another appropriate color
               onTap: () {
                 if (onNavigate != null) onNavigate!(4);
               },
             ),
             SizedBox(width: 8),
-            _QuickActionButton(
-              icon: Icons.add_task_rounded,
-              label: 'Add Task',
-              color: AppTheme.primaryColor,
-              onTap: () {
-                if (onNavigate != null) onNavigate!(1);
-              },
-            ),
+            Expanded(child: SizedBox()),
             SizedBox(width: 8),
-            _QuickActionButton(
-              icon: Icons.play_arrow_rounded,
-              label: 'Timer',
-              color: AppTheme.secondaryColor,
-              onTap: () {
-                if (onNavigate != null) onNavigate!(2);
-              },
-            ),
+            Expanded(child: SizedBox()),
             SizedBox(width: 8),
-            _QuickActionButton(
-              icon: Icons.check_rounded,
-              label: 'Log Task',
-              color: AppTheme.accentOrange,
-              onTap: () {
-                if (onNavigate != null) onNavigate!(1);
-              },
-            ),
+            Expanded(child: SizedBox()),
           ],
         ),
       ],

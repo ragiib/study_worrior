@@ -15,8 +15,10 @@ import 'app/providers/task_provider.dart';
 import 'app/providers/pomodoro_provider.dart';
 import 'app/providers/dashboard_provider.dart';
 import 'app/providers/ai_notes_provider.dart';
+import 'app/providers/library_provider.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
+import 'services/library_service.dart';
 
 void main() async {
   // Ensure Flutter bindings are initialized before any async work
@@ -38,6 +40,13 @@ void main() async {
     await databaseService.initialize();
   } catch (e) {
     debugPrint('Database init skipped: $e');
+  }
+
+  final libraryService = LibraryService();
+  try {
+    await libraryService.initialize();
+  } catch (e) {
+    debugPrint('Library init skipped: $e');
   }
 
   if (!kIsWeb) {
@@ -77,6 +86,14 @@ void main() async {
         // AI Notes Management
         ChangeNotifierProvider(
           create: (_) => AiNotesProvider(databaseService),
+        ),
+        // Library Management
+        ChangeNotifierProvider(
+          create: (_) {
+            final provider = LibraryProvider(libraryService);
+            provider.loadFiles();
+            return provider;
+          },
         ),
       ],
       child: const StudyWarriorApp(),

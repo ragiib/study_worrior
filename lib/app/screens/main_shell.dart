@@ -13,6 +13,7 @@ import 'dashboard_screen.dart';
 import 'tasks_screen.dart';
 import 'pomodoro_screen.dart';
 import 'premium_ai_screen.dart';
+import 'library/library_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -26,11 +27,16 @@ class _MainShellState extends State<MainShell> {
 
   late final List<Widget> _screens = [
     DashboardScreen(
-      onNavigate: (index) => setState(() => _currentIndex = index),
+      onNavigate: (index) {
+        if (index >= 0 && index < 5) {
+          setState(() => _currentIndex = index);
+        }
+      },
     ),
     const TasksScreen(),
     const PomodoroScreen(),
     const PremiumAiScreen(),
+    const LibraryScreen(),
   ];
 
   @override
@@ -46,7 +52,9 @@ class _MainShellState extends State<MainShell> {
         },
         child: KeyedSubtree(
           key: ValueKey(_currentIndex),
-          child: _screens[_currentIndex],
+          child: (_currentIndex >= 0 && _currentIndex < _screens.length)
+              ? _screens[_currentIndex]
+              : _screens[0],
         ),
       ),
       bottomNavigationBar: Container(
@@ -60,12 +68,15 @@ class _MainShellState extends State<MainShell> {
           ],
         ),
         child: BottomNavigationBar(
-          currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentIndex < 4 ? _currentIndex : 0,
           onTap: (index) {
-            setState(() => _currentIndex = index);
-            if (index == 0) {
-              // Force a reload of the dashboard stats when navigating back to it
-              Provider.of<DashboardProvider>(context, listen: false).loadStats();
+            if (index >= 0 && index < 4) {
+              setState(() => _currentIndex = index);
+              if (index == 0) {
+                // Force a reload of the dashboard stats when navigating back to it
+                Provider.of<DashboardProvider>(context, listen: false).loadStats();
+              }
             }
           },
           items: [
