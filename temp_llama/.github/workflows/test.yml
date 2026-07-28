@@ -1,0 +1,45 @@
+name: test
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  analyze-and-pure-dart-tests:
+    name: dart analyze + pure-dart tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      - name: dart pub get
+        run: dart pub get
+
+      - name: dart analyze
+        run: dart analyze
+
+      - name: dart format check
+        run: dart format --output=none --set-exit-if-changed lib/ test/
+
+      - name: version.dart matches submodule
+        run: |
+          tool/generate_version.sh
+          dart format lib/src/version.dart
+          if ! git diff --exit-code lib/src/version.dart; then
+            echo "::error::lib/src/version.dart is out of date — run tool/generate_version.sh and commit"
+            exit 1
+          fi
+
+      # Only the pure-Dart tests run here. Integration tests (smoke,
+      # generation, engine, chat, multimodal, persistence, context_shift)
+      # need a built libllama.dylib + a GGUF model and live in the
+      # apple-build job below.
+      - name: pure-dart tests
+        run: dart test test/utf8_accumulator_test.dart
