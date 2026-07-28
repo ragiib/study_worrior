@@ -71,8 +71,8 @@ class PremiumFeatureCard extends StatelessWidget {
               ),
             ),
 
-            // Locked Overlay & Badges
-            if (isLocked)
+            // Locked Overlay & Badges (Disabled for Development)
+            if (false /* isLocked */)
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -82,7 +82,7 @@ class PremiumFeatureCard extends StatelessWidget {
                 ),
               ),
 
-            if (isLocked)
+            if (false /* isLocked */)
               Positioned(
                 top: 12,
                 right: 12,
@@ -118,7 +118,7 @@ class PremiumFeatureCard extends StatelessWidget {
                 ),
               ),
               
-            if (isLocked)
+            if (false /* isLocked */)
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(12),

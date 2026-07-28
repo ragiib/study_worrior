@@ -4,15 +4,13 @@ import '../widgets/premium_feature_card.dart';
 import '../widgets/premium_page_header.dart';
 import 'ai_notes_generator_screen.dart';
 import 'ai_doubt_solver_screen.dart';
-import 'premium_upgrade_screen.dart';
 
 class PremiumAiScreen extends StatelessWidget {
   const PremiumAiScreen({super.key});
 
   void _handleLockedFeatureTap(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const PremiumUpgradeScreen()),
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Development Mode: Feature unlocked (Screen not yet implemented)')),
     );
   }
 
@@ -32,8 +30,6 @@ class PremiumAiScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return SafeArea(
       child: CustomScrollView(
         slivers: [
