@@ -4,6 +4,7 @@ import '../widgets/premium_feature_card.dart';
 import '../widgets/premium_page_header.dart';
 import 'ai_notes_generator_screen.dart';
 import 'ai_doubt_solver_screen.dart';
+import 'voice_teacher_screen.dart';
 
 class PremiumAiScreen extends StatelessWidget {
   const PremiumAiScreen({super.key});
@@ -25,6 +26,13 @@ class PremiumAiScreen extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AiDoubtSolverScreen()),
+    );
+  }
+
+  void _navigateToVoiceTeacher(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const VoiceTeacherScreen()),
     );
   }
 
@@ -73,8 +81,8 @@ class PremiumAiScreen extends StatelessWidget {
                       title: 'Voice\nTeacher',
                       icon: Icons.record_voice_over_rounded,
                       gradientColors: const [Color(0xFFD97706), Color(0xFFF59E0B)],
-                      isLocked: true,
-                      onTap: () => _handleLockedFeatureTap(context),
+                      isLocked: false, // Unlocked as requested
+                      onTap: () => _navigateToVoiceTeacher(context),
                     ),
                     PremiumFeatureCard(
                       title: 'Best YouTube\nFinder',

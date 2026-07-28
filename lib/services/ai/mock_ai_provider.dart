@@ -129,4 +129,12 @@ This is a simulated AI response. In a real scenario, the AI would read the text 
 
 Let me know if you need more examples or a simpler explanation!''';
   }
+
+  @override
+  Future<String> askVoiceTeacher({
+    required String question,
+  }) async {
+    await Future.delayed(const Duration(seconds: 1));
+    return "This is a mock response from your friendly Voice Teacher. You asked: $question. I hope this helps you understand the topic better. Keep up the great work!";
+  }
 }

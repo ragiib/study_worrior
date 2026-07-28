@@ -188,4 +188,20 @@ If the text doesn't contain enough information to fully answer the question, you
 Format your response entirely in Markdown. Do not include introductory conversational text like "Here is the answer".
 ''';
   }
+
+  static String getVoiceTeacherPrompt(String userSpeech) {
+    return '''
+You are an expert, encouraging, and friendly Voice Teacher for a student.
+The student has just spoken to you.
+
+Student said: "$userSpeech"
+
+Respond to the student in a clear, concise, and conversational manner.
+Your response will be read aloud by a Text-to-Speech (TTS) engine, so:
+- Avoid formatting like bold, italics, markdown tables, or complex lists.
+- Avoid long, complicated sentences.
+- Speak naturally and engagingly.
+- Keep the answer relatively short (a few sentences to a couple of paragraphs max) unless they specifically ask for a long explanation.
+''';
+  }
 }

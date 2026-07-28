@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../widgets/ai_model_selector.dart';
 import '../widgets/premium_page_header.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -33,6 +34,12 @@ class SettingsScreen extends StatelessWidget {
             _SectionHeader(title: 'Appearance'),
             SizedBox(height: 12),
             _buildThemeCard(context),
+            SizedBox(height: 24),
+
+            // ── AI Engine Section ───────────────────────────────────
+            _SectionHeader(title: 'AI Engine'),
+            SizedBox(height: 12),
+            AiModelSelector(),
             SizedBox(height: 24),
 
             // ── Notifications Section ───────────────────────────────

@@ -16,6 +16,8 @@ import 'app/providers/pomodoro_provider.dart';
 import 'app/providers/dashboard_provider.dart';
 import 'app/providers/ai_notes_provider.dart';
 import 'app/providers/library_provider.dart';
+import 'services/ai/ai_provider.dart';
+import 'services/ai/local_llama_ai_provider.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'services/library_service.dart';
@@ -83,9 +85,14 @@ void main() async {
             return provider;
           },
         ),
+        // AI Provider (Local Inference)
+        Provider<AiProvider>(
+          create: (_) => LocalLlamaAiProvider(),
+        ),
         // AI Notes Management
-        ChangeNotifierProvider(
+        ChangeNotifierProxyProvider<AiProvider, AiNotesProvider>(
           create: (_) => AiNotesProvider(databaseService),
+          update: (_, ai, aiNotes) => aiNotes!..updateAiProvider(ai),
         ),
         // Library Management
         ChangeNotifierProvider(

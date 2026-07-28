@@ -10,4 +10,8 @@ abstract class AiProvider {
     required String contextText,
     required String question,
   });
+
+  Future<String> askVoiceTeacher({
+    required String question,
+  });
 }

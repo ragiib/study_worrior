@@ -4,14 +4,13 @@ import 'package:uuid/uuid.dart';
 
 import '../../models/ai_note_model.dart';
 import '../../services/ai/ai_provider.dart';
-import '../../services/ai/ollama_ai_provider.dart';
 import '../../services/ocr_service.dart';
 import '../../services/database_service.dart';
 
 class AiNotesProvider extends ChangeNotifier {
   final DatabaseService _dbService;
   final OcrService _ocrService = OcrService();
-  final AiProvider _aiProvider = OllamaAiProvider();
+  AiProvider? _aiProvider;
   final _uuid = const Uuid();
 
   List<AiNote> _notes = [];
@@ -90,7 +89,11 @@ class AiNotesProvider extends ChangeNotifier {
       _processingStatus = 'Generating ${type.name} notes using AI...';
       notifyListeners();
 
-      final generatedContent = await _aiProvider.generateNotes(
+      if (_aiProvider == null) {
+        throw Exception("AI Engine is not initialized.");
+      }
+
+      final generatedContent = await _aiProvider!.generateNotes(
         extractedText: extractedText,
         type: type,
       );
@@ -134,6 +137,11 @@ class AiNotesProvider extends ChangeNotifier {
   Future<void> deleteNote(String id) async {
     await _dbService.deleteAiNote(id);
     await _loadNotes();
+  }
+
+  void updateAiProvider(AiProvider aiProvider) {
+    _aiProvider = aiProvider;
+    notifyListeners();
   }
 
   @override

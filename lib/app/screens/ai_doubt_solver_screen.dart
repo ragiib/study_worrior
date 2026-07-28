@@ -3,9 +3,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:provider/provider.dart';
 
 import '../../services/ai/ai_provider.dart';
-import '../../services/ai/ollama_ai_provider.dart';
 import '../../services/ocr_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_page_header.dart';
@@ -22,7 +22,6 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
   XFile? _selectedImage;
   
   final OcrService _ocrService = OcrService();
-  final AiProvider _aiProvider = OllamaAiProvider();
 
   bool _isProcessing = false;
   String _processingStatus = '';
@@ -89,7 +88,8 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
         _processingStatus = 'Solving doubt using AI...';
       });
 
-      final result = await _aiProvider.answerDoubt(
+      final aiProvider = context.read<AiProvider>();
+      final result = await aiProvider.answerDoubt(
         contextText: extractedText,
         question: question,
       );
