@@ -170,4 +170,22 @@ Chapter Content:
 $text
 ''';
   }
+
+  static String getDoubtSolverPrompt(String text, String question) {
+    return '''
+You are an expert educational assistant. A student has uploaded an image of their study material and has a specific question about it.
+
+First, here is the text extracted from the student's image:
+---
+$text
+---
+
+The student's question is: "$question"
+
+Please answer the student's question based primarily on the extracted text.
+Use simple, student-friendly language with clear explanations, examples, important points, and step-by-step reasoning when useful.
+If the text doesn't contain enough information to fully answer the question, you can use your general knowledge, but always refer back to the text where possible.
+Format your response entirely in Markdown. Do not include introductory conversational text like "Here is the answer".
+''';
+  }
 }

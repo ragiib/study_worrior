@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_theme.dart';
 import '../widgets/premium_feature_card.dart';
 import '../widgets/premium_page_header.dart';
 import 'ai_notes_generator_screen.dart';
+import 'ai_doubt_solver_screen.dart';
 import 'premium_upgrade_screen.dart';
 
 class PremiumAiScreen extends StatelessWidget {
@@ -23,10 +23,16 @@ class PremiumAiScreen extends StatelessWidget {
     );
   }
 
+  void _navigateToAiDoubtSolver(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AiDoubtSolverScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return SafeArea(
       child: CustomScrollView(
@@ -64,8 +70,8 @@ class PremiumAiScreen extends StatelessWidget {
                       title: 'AI Doubt\nSolver',
                       icon: Icons.live_help_rounded,
                       gradientColors: const [Color(0xFF059669), Color(0xFF10B981)],
-                      isLocked: true,
-                      onTap: () => _handleLockedFeatureTap(context),
+                      isLocked: false,
+                      onTap: () => _navigateToAiDoubtSolver(context),
                     ),
                     PremiumFeatureCard(
                       title: 'Voice\nTeacher',

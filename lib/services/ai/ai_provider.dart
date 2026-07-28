@@ -5,4 +5,9 @@ abstract class AiProvider {
     required String extractedText,
     required NoteType type,
   });
+
+  Future<String> answerDoubt({
+    required String contextText,
+    required String question,
+  });
 }

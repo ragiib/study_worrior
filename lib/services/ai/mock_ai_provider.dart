@@ -106,4 +106,27 @@ D) Delayed reactions
 *Answer: B*''';
     }
   }
+
+  @override
+  Future<String> answerDoubt({
+    required String contextText,
+    required String question,
+  }) async {
+    // Simulate network delay for AI processing
+    await Future.delayed(const Duration(seconds: 2));
+
+    return '''# Answer to Your Doubt
+
+**Your Question:** "$question"
+
+Based on the provided material, here is an explanation:
+
+This is a simulated AI response. In a real scenario, the AI would read the text from your image and explain the concepts directly related to your question. For example, if you asked about a specific formula or diagram, the AI would break it down step-by-step here.
+
+### Key Points:
+* **First point:** The core concept is X.
+* **Second point:** It relates to Y because of Z.
+
+Let me know if you need more examples or a simpler explanation!''';
+  }
 }

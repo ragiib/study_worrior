@@ -81,6 +81,67 @@ class OllamaAiProvider implements AiProvider {
         throw Exception('CONNECTION_ERROR: Could not connect to Ollama at $_baseUrl. Please ensure Ollama is running locally.');
       }
       
+      
+      rethrow;
+    }
+  }
+
+  @override
+  Future<String> answerDoubt({
+    required String contextText,
+    required String question,
+  }) async {
+    final prompt = PromptManager.getDoubtSolverPrompt(contextText, question);
+    
+    debugPrint('OllamaAiProvider: Sending doubt solver request to $_baseUrl with model $_model');
+
+    try {
+      final response = await http.post(
+        Uri.parse(_baseUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'model': _model,
+          'prompt': prompt,
+          'stream': false,
+        }),
+      ).timeout(_timeout, onTimeout: () {
+        debugPrint('OllamaAiProvider: Request timed out');
+        throw Exception('TIMEOUT: Request to Ollama timed out. Ensure the $_model model is downloaded and Ollama is running.');
+      });
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final text = data['response'];
+        if (text != null) {
+          debugPrint('OllamaAiProvider: Successfully generated doubt answer');
+          return text;
+        }
+        throw Exception('Empty response from Ollama API.');
+      } else if (response.statusCode == 404) {
+        throw Exception('OLLAMA_MODEL_NOT_FOUND: Model "$_model" not found. Please run "ollama run $_model" in your terminal first.');
+      } else {
+        final status = response.statusCode;
+        throw Exception('OLLAMA_ERROR: API returned status $status - ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('OllamaAiProvider Exception: $e');
+      final errorStr = e.toString();
+      
+      // Catch common web CORS and network errors
+      if (kIsWeb && (errorStr.contains('XMLHttpRequest error') || errorStr.contains('Failed to fetch'))) {
+        throw Exception(
+          'CORS_ERROR: Your browser blocked the connection to Ollama.\n\n'
+          'To fix this forever:\n'
+          '1. Search for "Environment Variables" in Windows Start Menu.\n'
+          '2. Add a new System Variable: Name=OLLAMA_ORIGINS Value=*\n'
+          '3. Fully quit Ollama (right-click its icon in the system tray -> Quit) and start it again.'
+        );
+      }
+      
+      if (errorStr.contains('Connection refused') || errorStr.contains('Failed host lookup') || errorStr.contains('SocketException')) {
+        throw Exception('CONNECTION_ERROR: Could not connect to Ollama at $_baseUrl. Please ensure Ollama is running locally.');
+      }
+      
       rethrow;
     }
   }
