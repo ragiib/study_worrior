@@ -34,11 +34,24 @@ class AiModelManager extends ChangeNotifier {
       final file = File('${dir.path}/$modelFileName');
       if (await file.exists()) {
         final length = await file.length();
-        if (length > 0) {
+        // The Qwen 2.5 0.5B Q4_K_M model is ~398 MB.
+        // Ensure the file is at least 350 MB to prevent loading partial/corrupted downloads.
+        if (length > 350 * 1024 * 1024) {
           _isDownloaded = true;
           _modelPath = file.path;
           notifyListeners();
+        } else {
+          // If the file exists but is too small, it's a corrupted/partial download. Delete it.
+          await file.delete();
+          _isDownloaded = false;
+          _modelPath = null;
         }
+      }
+      
+      // Also clean up any lingering temporary download files
+      final tempFile = File('${dir.path}/$modelFileName.tmp');
+      if (await tempFile.exists()) {
+        await tempFile.delete();
       }
     } catch (e) {
       debugPrint('Error checking model existence: $e');
@@ -62,13 +75,14 @@ class AiModelManager extends ChangeNotifier {
     try {
       final dir = await getApplicationDocumentsDirectory();
       final savePath = '${dir.path}/$modelFileName';
+      final tempSavePath = '$savePath.tmp';
       
       final dio = Dio();
       _cancelToken = CancelToken();
 
       await dio.download(
         modelUrl,
-        savePath,
+        tempSavePath,
         cancelToken: _cancelToken,
         onReceiveProgress: (received, total) {
           if (total != -1) {
@@ -77,6 +91,12 @@ class AiModelManager extends ChangeNotifier {
           }
         },
       );
+
+      // Once download is fully complete, rename the temp file to the final model file name.
+      final tempFile = File(tempSavePath);
+      if (await tempFile.exists()) {
+        await tempFile.rename(savePath);
+      }
 
       _isDownloaded = true;
       _modelPath = savePath;
