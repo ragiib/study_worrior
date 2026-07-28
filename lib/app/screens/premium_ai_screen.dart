@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../services/ai/ai_model_manager.dart';
+import 'prepare_offline_ai_screen.dart';
 
 import '../widgets/premium_feature_card.dart';
 import '../widgets/premium_page_header.dart';
@@ -15,25 +19,40 @@ class PremiumAiScreen extends StatelessWidget {
     );
   }
 
+  void _checkAndNavigate(BuildContext context, Widget destination) {
+    final manager = context.read<AiModelManager>();
+    if (!manager.isDownloaded) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PrepareOfflineAiScreen(
+            onDownloadComplete: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => destination),
+              );
+            },
+          ),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => destination),
+      );
+    }
+  }
+
   void _navigateToAiNotes(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AiNotesGeneratorScreen()),
-    );
+    _checkAndNavigate(context, const AiNotesGeneratorScreen());
   }
 
   void _navigateToAiDoubtSolver(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const AiDoubtSolverScreen()),
-    );
+    _checkAndNavigate(context, const AiDoubtSolverScreen());
   }
 
   void _navigateToVoiceTeacher(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const VoiceTeacherScreen()),
-    );
+    _checkAndNavigate(context, const VoiceTeacherScreen());
   }
 
   @override

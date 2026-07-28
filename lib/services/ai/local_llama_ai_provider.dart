@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:llama_cpp_dart/llama_cpp_dart.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'ai_model_manager.dart';
 
 import '../../models/ai_note_model.dart';
 import 'ai_provider.dart';
@@ -12,7 +12,9 @@ class LocalLlamaAiProvider implements AiProvider {
   String? _currentModelPath;
   bool _isInitializing = false;
 
-  LocalLlamaAiProvider();
+  final AiModelManager _modelManager;
+
+  LocalLlamaAiProvider(this._modelManager);
 
   Future<void> _ensureInitialized() async {
     if (_llamaParent != null) return;
@@ -26,11 +28,10 @@ class LocalLlamaAiProvider implements AiProvider {
 
     _isInitializing = true;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final path = prefs.getString('local_gguf_model_path');
+      final path = _modelManager.modelPath;
 
-      if (path == null || path.isEmpty) {
-        throw Exception('No local AI model selected. Please select a .gguf model in settings.');
+      if (path == null || path.isEmpty || !_modelManager.isDownloaded) {
+        throw Exception('Offline AI model not ready. Please download the model first.');
       }
 
       _currentModelPath = path;

@@ -20,7 +20,9 @@ class OllamaAiProvider implements AiProvider {
     }
     // Safe platform check that won't crash on web
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:11434/api/generate';
+      // 10.0.2.2 ONLY works on Android Emulators. 
+      // For physical Android devices on the same Wi-Fi, you must use the PC's IP address:
+      return 'http://10.255.96.164:11434/api/generate';
     }
     return 'http://127.0.0.1:11434/api/generate';
   }

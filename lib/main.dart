@@ -18,6 +18,7 @@ import 'app/providers/ai_notes_provider.dart';
 import 'app/providers/library_provider.dart';
 import 'services/ai/ai_provider.dart';
 import 'services/ai/local_llama_ai_provider.dart';
+import 'services/ai/ai_model_manager.dart';
 import 'services/database_service.dart';
 import 'services/notification_service.dart';
 import 'services/library_service.dart';
@@ -85,9 +86,11 @@ void main() async {
             return provider;
           },
         ),
+        // AI Model Manager (Download & Storage State)
+        ChangeNotifierProvider(create: (_) => AiModelManager()),
         // AI Provider (Local Inference)
         Provider<AiProvider>(
-          create: (_) => LocalLlamaAiProvider(),
+          create: (context) => LocalLlamaAiProvider(context.read<AiModelManager>()),
         ),
         // AI Notes Management
         ChangeNotifierProxyProvider<AiProvider, AiNotesProvider>(

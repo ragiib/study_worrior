@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
-import '../widgets/ai_model_selector.dart';
+import '../../services/ai/ai_model_manager.dart';
 import '../widgets/premium_page_header.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -37,9 +37,9 @@ class SettingsScreen extends StatelessWidget {
             SizedBox(height: 24),
 
             // ── AI Engine Section ───────────────────────────────────
-            _SectionHeader(title: 'AI Engine'),
+            _SectionHeader(title: 'Offline AI Storage'),
             SizedBox(height: 12),
-            AiModelSelector(),
+            _buildAiStorageCard(context),
             SizedBox(height: 24),
 
             // ── Notifications Section ───────────────────────────────
@@ -122,6 +122,69 @@ class SettingsScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  // ── AI Storage Card ─────────────────────────────────────────────────
+  Widget _buildAiStorageCard(BuildContext context) {
+    return Consumer<AiModelManager>(
+      builder: (context, manager, _) {
+        return Container(
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              _SettingsTile(
+                icon: Icons.storage_rounded,
+                iconColor: manager.isDownloaded ? AppTheme.secondaryColor : Colors.grey,
+                title: 'Offline AI Model',
+                subtitle: manager.isDownloaded 
+                    ? 'Qwen 2.5 is downloaded (~350MB)'
+                    : 'Not downloaded',
+                trailing: manager.isDownloaded
+                    ? IconButton(
+                        icon: Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _confirmDeleteModel(context, manager),
+                      )
+                    : Icon(Icons.cloud_off, color: Colors.grey),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteModel(BuildContext context, AiModelManager manager) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete AI Model?'),
+        content: Text('This will free up ~350MB of space. AI features will require downloading it again to function offline.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await manager.deleteModel();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Offline AI model deleted.')),
+        );
+      }
+    }
   }
 
   // ── Notification Controls ───────────────────────────────────────────
