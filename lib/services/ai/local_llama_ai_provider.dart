@@ -181,17 +181,15 @@ class LocalLlamaAiProvider implements AiProvider {
     
     final prompt = PromptManager.getVoiceTeacherPrompt(question, history);
     
+    // Subscribe to stream BEFORE sending prompt to avoid missing tokens
+    final controller = StreamController<String>();
+    final sub = parent.stream.listen((chunk) {
+      controller.add(chunk);
+    });
+    
     // Send prompt and yield stream
     try {
       final promptId = await parent.sendPrompt(prompt);
-      
-      // We can iterate the stream manually or listen.
-      // parent.stream gives us tokens as they arrive.
-      
-      final controller = StreamController<String>();
-      final sub = parent.stream.listen((chunk) {
-        controller.add(chunk);
-      });
       
       // Await completion in background
       parent.waitForCompletion(promptId).then((_) {
@@ -206,6 +204,8 @@ class LocalLlamaAiProvider implements AiProvider {
       yield* controller.stream;
       
     } catch (e) {
+      sub.cancel();
+      controller.close();
       debugPrint('LocalLlamaAiProvider Stream Error: $e');
       rethrow;
     }
