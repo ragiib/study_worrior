@@ -97,7 +97,7 @@ class _QuizPlayingScreenState extends State<QuizPlayingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Question \${_currentIndex + 1} of \${widget.quiz.questions.length}'),
+        title: Text('Question ${_currentIndex + 1} of ${widget.quiz.questions.length}'),
         centerTitle: true,
       ),
       body: SafeArea(

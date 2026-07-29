@@ -66,7 +66,7 @@ class QuizResultScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\${percentage.toInt()}%',
+                        '${percentage.toInt()}%',
                         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: scoreColor,
@@ -110,7 +110,7 @@ class QuizResultScreen extends StatelessWidget {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
-                                  'Q\${index + 1}: \${question.question}',
+                                  'Q${index + 1}: ${question.question}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -122,7 +122,7 @@ class QuizResultScreen extends StatelessWidget {
                           const SizedBox(height: 12),
                           if (!isCorrect && userAnswer != null) ...[
                             Text(
-                              'Your Answer: \${question.options[userAnswer]}',
+                              'Your Answer: ${question.options[userAnswer]}',
                               style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 4),
@@ -135,7 +135,7 @@ class QuizResultScreen extends StatelessWidget {
                             const SizedBox(height: 4),
                           ],
                           Text(
-                            'Correct Answer: \${question.options[question.correctAnswerIndex]}',
+                            'Correct Answer: ${question.options[question.correctAnswerIndex]}',
                             style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
