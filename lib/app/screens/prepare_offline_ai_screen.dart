@@ -215,18 +215,18 @@ class _PrepareOfflineAiScreenState extends State<PrepareOfflineAiScreen> {
                       margin: const EdgeInsets.only(top: 24.0),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.red.withAlpha(20),
+                        color: Colors.red.shade400.withAlpha(20),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.red.withAlpha(50)),
+                        border: Border.all(color: Colors.red.shade400.withAlpha(50)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded, color: Colors.red),
+                          Icon(Icons.error_outline_rounded, color: Colors.red.shade400),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _error!,
-                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Colors.red.shade400, fontWeight: FontWeight.w500),
                             ),
                           ),
                         ],
@@ -278,7 +278,7 @@ class _PrepareOfflineAiScreenState extends State<PrepareOfflineAiScreen> {
                             icon: const Icon(Icons.close_rounded),
                             label: const Text('Cancel Download'),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
+                              foregroundColor: Colors.red.shade400,
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             ),
                           )

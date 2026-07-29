@@ -60,7 +60,7 @@ class _AnimatedAiLoaderState extends State<AnimatedAiLoader> with TickerProvider
     // Handle engagement messages if not compact
     if (!widget.isCompact) {
       _pickNextEngagementMessage();
-      _engagementTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      _engagementTimer = Timer.periodic(const Duration(seconds: 12), (timer) {
         if (mounted && !widget.isSuccessSequence) {
           setState(() {
             _pickNextEngagementMessage();
@@ -232,7 +232,7 @@ class _AnimatedAiLoaderState extends State<AnimatedAiLoader> with TickerProvider
                   Icon(
                     widget.isSuccessSequence ? Icons.check_circle : Icons.auto_awesome,
                     color: widget.isSuccessSequence 
-                        ? Colors.green 
+                        ? Colors.green.shade600 
                         : theme.primaryColor.withOpacity(_glowAnimation.value),
                     size: 32,
                   ),
@@ -260,7 +260,7 @@ class _AnimatedAiLoaderState extends State<AnimatedAiLoader> with TickerProvider
               key: ValueKey<String>(displayText),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: widget.isSuccessSequence ? Colors.green : theme.primaryColor,
+                color: widget.isSuccessSequence ? Colors.green.shade600 : theme.primaryColor,
               ),
               textAlign: TextAlign.center,
             ),
@@ -273,17 +273,11 @@ class _AnimatedAiLoaderState extends State<AnimatedAiLoader> with TickerProvider
             duration: const Duration(milliseconds: 400),
             height: _currentEngagementMessage != null ? 80 : 0,
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 1500),
               transitionBuilder: (Widget child, Animation<double> animation) {
                 return FadeTransition(
                   opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.0, 0.1),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
+                  child: child, // Removed SlideTransition for a calmer, softer fade
                 );
               },
               child: _currentEngagementMessage != null

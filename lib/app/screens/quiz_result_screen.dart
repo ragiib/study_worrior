@@ -18,16 +18,16 @@ class QuizResultScreen extends StatelessWidget {
     Color scoreColor = AppTheme.primaryColor;
     if (percentage == 100) {
       message = 'Perfect Score! 🏆';
-      scoreColor = Colors.green;
+      scoreColor = Colors.green.shade600;
     } else if (percentage >= 80) {
       message = 'Excellent! 🌟';
-      scoreColor = Colors.green;
+      scoreColor = Colors.green.shade600;
     } else if (percentage >= 60) {
       message = 'Well done! 👍';
-      scoreColor = Colors.orange;
+      scoreColor = Colors.orange.shade600;
     } else {
       message = 'Keep practicing! 💪';
-      scoreColor = Colors.red;
+      scoreColor = Colors.red.shade400;
     }
 
     return Scaffold(
@@ -104,7 +104,7 @@ class QuizResultScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 isCorrect ? Icons.check_circle : Icons.cancel,
-                                color: isCorrect ? Colors.green : Colors.red,
+                                color: isCorrect ? Colors.green.shade600 : Colors.red.shade400,
                                 size: 24,
                               ),
                               const SizedBox(width: 12),
@@ -123,20 +123,20 @@ class QuizResultScreen extends StatelessWidget {
                           if (!isCorrect && userAnswer != null) ...[
                             Text(
                               'Your Answer: ${question.options[userAnswer]}',
-                              style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Colors.red.shade400, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 4),
                           ],
                           if (userAnswer == null) ...[
-                            const Text(
+                            Text(
                               'Your Answer: Skipped',
-                              style: TextStyle(color: Colors.orange, fontWeight: FontWeight.w500),
+                              style: TextStyle(color: Colors.orange.shade600, fontWeight: FontWeight.w500),
                             ),
                             const SizedBox(height: 4),
                           ],
                           Text(
                             'Correct Answer: ${question.options[question.correctAnswerIndex]}',
-                            style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.green.shade600, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
                           Container(

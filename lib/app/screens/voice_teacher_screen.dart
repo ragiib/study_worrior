@@ -585,13 +585,13 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: _isListening 
-                          ? [Colors.red, Colors.redAccent]
+                          ? [Colors.red.shade400, Colors.red.shade300]
                           : [theme.primaryColor, theme.primaryColor.withAlpha(200)],
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: _isListening 
-                              ? Colors.red.withAlpha(100) 
+                              ? Colors.red.shade400.withAlpha(100) 
                               : theme.primaryColor.withAlpha(100),
                           blurRadius: _isListening ? 30 : 15,
                           spreadRadius: _isListening ? 10 : 2,
