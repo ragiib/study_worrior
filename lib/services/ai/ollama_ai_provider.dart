@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../models/ai_note_model.dart';
+import '../../models/chat_message.dart';
 import 'ai_provider.dart';
 import 'prompt_manager.dart';
 
@@ -151,8 +153,10 @@ class OllamaAiProvider implements AiProvider {
   @override
   Future<String> askVoiceTeacher({
     required String question,
+    List<ChatMessage> history = const [],
   }) async {
-    return _generateResponse(PromptManager.getVoiceTeacherPrompt(question));
+    final prompt = PromptManager.getVoiceTeacherPrompt(question, history);
+    return _generateResponse(prompt);
   }
 
   Future<String> _generateResponse(String prompt) async {

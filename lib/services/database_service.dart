@@ -13,6 +13,7 @@ class DatabaseService {
   late Box<String> _habitsBox; // Used for tasks now to preserve data
   late Box<String> _sessionsBox;
   late Box<String> _aiNotesBox;
+  late Box<String> _voiceBox;
 
   bool get isInitialized => _initialized;
 
@@ -25,6 +26,7 @@ class DatabaseService {
     _habitsBox = await Hive.openBox<String>('habits');
     _sessionsBox = await Hive.openBox<String>('sessions');
     _aiNotesBox = await Hive.openBox<String>('ai_notes');
+    _voiceBox = await Hive.openBox<String>('voice_teacher');
     
     _initialized = true;
   }
@@ -211,5 +213,26 @@ class DatabaseService {
     }
     
     return streak;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  // VOICE TEACHER OPERATIONS
+  // ══════════════════════════════════════════════════════════════════════
+
+  Future<List<dynamic>> getVoiceConversation() async {
+    if (!_initialized) return [];
+    final jsonStr = _voiceBox.get('current_conversation');
+    if (jsonStr == null) return [];
+    return jsonDecode(jsonStr);
+  }
+
+  Future<void> saveVoiceConversation(List<dynamic> messagesMapList) async {
+    if (!_initialized) return;
+    await _voiceBox.put('current_conversation', jsonEncode(messagesMapList));
+  }
+
+  Future<void> clearVoiceConversation() async {
+    if (!_initialized) return;
+    await _voiceBox.delete('current_conversation');
   }
 }

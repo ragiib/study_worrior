@@ -4,14 +4,71 @@ import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+enum AiModelTier {
+  tier4GB,
+  tier6GB,
+  tier8GB,
+}
+
+class AiModelConfig {
+  final AiModelTier tier;
+  final String name;
+  final String description;
+  final String url;
+  final String filename;
+  final int minBytes;
+  final int requiredRamGB;
+  final String displaySize;
+
+  const AiModelConfig({
+    required this.tier,
+    required this.name,
+    required this.description,
+    required this.url,
+    required this.filename,
+    required this.minBytes,
+    required this.requiredRamGB,
+    required this.displaySize,
+  });
+}
 
 class AiModelManager extends ChangeNotifier {
-  // Use Qwen 2.5 0.5B Instruct for fast mobile testing.
-  // When Qwen 3 is available in GGUF format, update this URL.
-  static const String modelUrl = 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf';
-  static const String modelFileName = 'qwen2.5-0.5b-instruct-q4_k_m.gguf';
-  // Minimum expected file size (bytes). The full Q4_K_M is ~398 MB.
-  static const int minModelBytes = 350 * 1024 * 1024;
+  static const String _prefKeySelectedTier = 'ai_model_selected_tier';
+
+  static const Map<AiModelTier, AiModelConfig> availableModels = {
+    AiModelTier.tier4GB: AiModelConfig(
+      tier: AiModelTier.tier4GB,
+      name: 'Qwen 2.5 (0.5B Instruct)',
+      description: 'Lightweight model. Fast and uses very little RAM.',
+      url: 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf',
+      filename: 'qwen2.5-0.5b-instruct-q4_k_m.gguf',
+      minBytes: 350 * 1024 * 1024,
+      requiredRamGB: 4,
+      displaySize: '~398 MB',
+    ),
+    AiModelTier.tier6GB: AiModelConfig(
+      tier: AiModelTier.tier6GB,
+      name: 'Qwen 2.5 (3B Instruct)',
+      description: 'Balanced model. Better reasoning, requires more RAM.',
+      url: 'https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF/resolve/main/qwen2.5-3b-instruct-q4_k_m.gguf',
+      filename: 'qwen2.5-3b-instruct-q4_k_m.gguf',
+      minBytes: 1500 * 1024 * 1024,
+      requiredRamGB: 6,
+      displaySize: '~2.0 GB',
+    ),
+    AiModelTier.tier8GB: AiModelConfig(
+      tier: AiModelTier.tier8GB,
+      name: 'Qwen 2.5 (7B Instruct)',
+      description: 'Heavyweight model. Best reasoning, requires 8GB+ RAM.',
+      url: 'https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m.gguf',
+      filename: 'qwen2.5-7b-instruct-q4_k_m.gguf',
+      minBytes: 4000 * 1024 * 1024,
+      requiredRamGB: 8,
+      displaySize: '~4.3 GB',
+    ),
+  };
 
   bool _isDownloaded = false;
   bool get isDownloaded => _isDownloaded;
@@ -25,67 +82,96 @@ class AiModelManager extends ChangeNotifier {
   String? _modelPath;
   String? get modelPath => _modelPath;
 
+  AiModelTier _selectedTier = AiModelTier.tier4GB;
+  AiModelTier get selectedTier => _selectedTier;
+
+  AiModelConfig get activeModelConfig => availableModels[_selectedTier]!;
+
   CancelToken? _cancelToken;
 
-  // Completer that resolves once the initial model-existence check finishes.
-  // Callers should `await manager.ready` before reading modelPath / isDownloaded
-  // to avoid a race with the async constructor check.
   final Completer<void> _readyCompleter = Completer<void>();
-
-  /// Resolves when the initial model-existence check on disk has completed.
-  /// Always await this before reading [modelPath] or [isDownloaded].
   Future<void> get ready => _readyCompleter.future;
 
   AiModelManager() {
-    _checkModelExists();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTierIndex = prefs.getInt(_prefKeySelectedTier);
+    if (savedTierIndex != null && savedTierIndex >= 0 && savedTierIndex < AiModelTier.values.length) {
+      _selectedTier = AiModelTier.values[savedTierIndex];
+    }
+    await _checkModelExists();
+  }
+
+  Future<bool> doesModelExistLocally(AiModelTier tier) async {
+    try {
+      final config = availableModels[tier]!;
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/${config.filename}';
+      final file = File(filePath);
+
+      if (await file.exists()) {
+        final length = await file.length();
+        if (length > config.minBytes) {
+          return true;
+        }
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  Future<void> switchActiveModel(AiModelTier newTier) async {
+    if (await doesModelExistLocally(newTier)) {
+      _selectedTier = newTier;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_prefKeySelectedTier, newTier.index);
+      await _checkModelExists();
+    } else {
+      throw Exception('Cannot switch to a model that is not downloaded.');
+    }
   }
 
   Future<void> _checkModelExists() async {
     try {
+      final config = activeModelConfig;
       final dir = await getApplicationDocumentsDirectory();
-      final filePath = '${dir.path}/$modelFileName';
+      final filePath = '${dir.path}/${config.filename}';
       final file = File(filePath);
 
       final exists = await file.exists();
-      debugPrint('[AiModelManager] checking model: $filePath');
-      debugPrint('[AiModelManager] file exists: $exists');
-
+      
       if (exists) {
         final length = await file.length();
-        debugPrint('[AiModelManager] file size: $length bytes');
-
-        // Ensure the file is at least the minimum expected size.
-        if (length > minModelBytes) {
+        if (length > config.minBytes) {
           _isDownloaded = true;
           _modelPath = filePath;
-          debugPrint('[AiModelManager] model ready at: $_modelPath');
           notifyListeners();
         } else {
-          // Partial/corrupted download — remove it so the user can re-download.
-          debugPrint('[AiModelManager] file too small ($length bytes), deleting.');
           await file.delete();
           _isDownloaded = false;
           _modelPath = null;
         }
+      } else {
+        _isDownloaded = false;
+        _modelPath = null;
       }
 
-      // Also clean up any lingering temporary download files.
       final tempFile = File('$filePath.tmp');
       if (await tempFile.exists()) {
-        debugPrint('[AiModelManager] removing stale .tmp file');
         await tempFile.delete();
       }
     } catch (e) {
       debugPrint('[AiModelManager] error checking model existence: $e');
     } finally {
-      // Always complete the ready future so waiters are never stuck.
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
       }
     }
   }
 
-  Future<void> downloadModel({required bool wifiOnly}) async {
+  Future<void> downloadModel(AiModelTier tierToDownload, {required bool wifiOnly}) async {
     if (_isDownloading) return;
 
     if (wifiOnly) {
@@ -100,15 +186,16 @@ class AiModelManager extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final config = availableModels[tierToDownload]!;
       final dir = await getApplicationDocumentsDirectory();
-      final savePath = '${dir.path}/$modelFileName';
+      final savePath = '${dir.path}/${config.filename}';
       final tempSavePath = '$savePath.tmp';
       
       final dio = Dio();
       _cancelToken = CancelToken();
 
       await dio.download(
-        modelUrl,
+        config.url,
         tempSavePath,
         cancelToken: _cancelToken,
         onReceiveProgress: (received, total) {
@@ -119,18 +206,18 @@ class AiModelManager extends ChangeNotifier {
         },
       );
 
-      // Once download is fully complete, rename the temp file to the final model file name.
       final tempFile = File(tempSavePath);
       if (await tempFile.exists()) {
         await tempFile.rename(savePath);
       }
 
-      final finalLength = await File(savePath).length();
-      debugPrint('[AiModelManager] download complete. path: $savePath, size: $finalLength bytes');
-
+      _selectedTier = tierToDownload;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt(_prefKeySelectedTier, tierToDownload.index);
+      
       _isDownloaded = true;
       _modelPath = savePath;
-      // Ensure ready completer is resolved for callers that awaited it before download.
+
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
       }
@@ -153,20 +240,23 @@ class AiModelManager extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteModel() async {
+  Future<void> deleteSpecificModel(AiModelTier tier) async {
     try {
-      if (_modelPath != null) {
-        final file = File(_modelPath!);
-        if (await file.exists()) {
-          await file.delete();
-        }
+      final config = availableModels[tier]!;
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/${config.filename}';
+      final file = File(filePath);
+      if (await file.exists()) {
+        await file.delete();
       }
-      _isDownloaded = false;
-      _modelPath = null;
-      _downloadProgress = 0.0;
-      notifyListeners();
+      if (_selectedTier == tier) {
+        _isDownloaded = false;
+        _modelPath = null;
+        _downloadProgress = 0.0;
+        notifyListeners();
+      }
     } catch (e) {
-      debugPrint('Error deleting model: $e');
+      debugPrint('Error deleting model $tier: $e');
       throw Exception('Failed to delete model');
     }
   }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../models/ai_note_model.dart';
+import '../../models/chat_message.dart';
 import 'ai_provider.dart';
 
 class MockAiProvider implements AiProvider {
@@ -133,8 +134,9 @@ Let me know if you need more examples or a simpler explanation!''';
   @override
   Future<String> askVoiceTeacher({
     required String question,
+    List<ChatMessage> history = const [],
   }) async {
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 2));
     return "This is a mock response from your friendly Voice Teacher. You asked: $question. I hope this helps you understand the topic better. Keep up the great work!";
   }
 }

@@ -1,5 +1,7 @@
 import '../../models/ai_note_model.dart';
 
+import '../../models/chat_message.dart';
+
 abstract class AiProvider {
   Future<String> generateNotes({
     required String extractedText,
@@ -13,5 +15,6 @@ abstract class AiProvider {
 
   Future<String> askVoiceTeacher({
     required String question,
+    List<ChatMessage> history = const [],
   });
 }

@@ -1,4 +1,5 @@
 import '../../models/ai_note_model.dart';
+import '../../models/chat_message.dart';
 import 'package:flutter/foundation.dart';
 
 class PromptManager {
@@ -144,15 +145,36 @@ $text
 ''';
   }
 
-  static String getVoiceTeacherPrompt(String userSpeech) {
-    return '''
-You are a friendly voice tutor. The student said: "$userSpeech"
+  static String getVoiceTeacherPrompt(String userSpeech, List<ChatMessage> history) {
+    // Only take the last 6 messages (3 turns) to prevent context overflow
+    final recentHistory = history.length > 6 ? history.sublist(history.length - 6) : history;
+    
+    final historyBuffer = StringBuffer();
+    for (final msg in recentHistory) {
+      if (msg.role == 'user') {
+        historyBuffer.writeln('Student: "${msg.content}"');
+      } else {
+        historyBuffer.writeln('Voice Teacher: "${msg.content}"');
+      }
+    }
 
+    return '''
+You are an expert educational Voice Teacher. You are having a conversation with a student.
 Rules:
+- PRIORITIZE FACTUAL ACCURACY. If the student states a false premise (e.g. breathing on Jupiter without oxygen), you MUST politely correct them.
+- Do NOT blindly agree with the student if they are incorrect.
+- If you don't know the answer, say "I'm not sure about that." Do NOT guess or invent facts.
+- Give simple, student-friendly explanations appropriate for a 10-year-old.
 - Reply in exactly 1 or 2 short sentences.
-- Speak naturally and simply, like talking to a 10-year-old.
+- Speak naturally.
 - Do NOT use bullet points, bold text, or lists.
 - Be extremely brief.
+
+Conversation History:
+${historyBuffer.toString()}
+
+Student: "$userSpeech"
+Voice Teacher:
 ''';
   }
 }

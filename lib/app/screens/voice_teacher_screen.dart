@@ -7,6 +7,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../services/ai/ai_provider.dart';
+import '../../../services/database_service.dart';
+import '../../../models/chat_message.dart';
 import '../widgets/premium_page_header.dart';
 
 class VoiceTeacherScreen extends StatefulWidget {
@@ -31,13 +33,58 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
   
   // State
   bool _isThinking = false;
-  String _aiResponse = '';
+  List<ChatMessage> _messages = [];
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    _loadHistory();
     _initSpeech();
     _initTts();
+  }
+
+  Future<void> _loadHistory() async {
+    final db = context.read<DatabaseService>();
+    final rawMessages = await db.getVoiceConversation();
+    if (mounted) {
+      setState(() {
+        _messages = rawMessages.map((e) {
+          final map = Map<String, dynamic>.from(e as Map);
+          return ChatMessage.fromMap(map);
+        }).toList();
+      });
+      _scrollToBottom();
+    }
+  }
+
+  Future<void> _saveHistory() async {
+    final db = context.read<DatabaseService>();
+    await db.saveVoiceConversation(_messages.map((m) => m.toMap()).toList());
+  }
+
+  void _clearConversation() async {
+    await _stopTts();
+    final db = context.read<DatabaseService>();
+    await db.clearVoiceConversation();
+    if (mounted) {
+      setState(() {
+        _messages.clear();
+        _lastWords = '';
+      });
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   Future<void> _initSpeech() async {
@@ -60,7 +107,7 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
                 _isListening = false;
               });
               // If it automatically stopped and we have words, trigger AI
-              if (_lastWords.isNotEmpty && !_isThinking && _aiResponse.isEmpty) {
+              if (_lastWords.isNotEmpty && !_isThinking) {
                 _askAi();
               }
             }
@@ -148,7 +195,6 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
       await _stopTts(); // stop any ongoing speech
       setState(() {
         _lastWords = '';
-        _aiResponse = '';
         _isListening = true;
       });
       try {
@@ -206,35 +252,49 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
   Future<void> _askAi() async {
     if (_lastWords.trim().isEmpty) return;
     
+    final question = _lastWords;
     setState(() {
+      _messages.add(ChatMessage(role: 'user', content: question));
+      _lastWords = '';
       _isThinking = true;
     });
+    _saveHistory();
+    _scrollToBottom();
 
     try {
       final aiProvider = context.read<AiProvider>();
-      final response = await aiProvider.askVoiceTeacher(question: _lastWords);
+      
+      // Pass history excluding the current question we just added
+      final history = _messages.sublist(0, _messages.length - 1);
+      
+      final response = await aiProvider.askVoiceTeacher(
+        question: question,
+        history: history,
+      );
       
       if (mounted) {
         setState(() {
-          _aiResponse = response;
+          _messages.add(ChatMessage(role: 'ai', content: response));
           _isThinking = false;
         });
+        _saveHistory();
+        _scrollToBottom();
         _prepareAndPlayTts(response);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _aiResponse = "Sorry, I had trouble thinking of an answer. Let's try again.";
+          _messages.add(ChatMessage(role: 'ai', content: "Sorry, I had trouble thinking of an answer. Let's try again."));
           _isThinking = false;
         });
-        _prepareAndPlayTts(_aiResponse);
+        _saveHistory();
+        _scrollToBottom();
+        _prepareAndPlayTts(_messages.last.content);
       }
     }
   }
 
   void _prepareAndPlayTts(String text) {
-    // Chunking by sentences to ensure smooth playback for long responses.
-    // We split by standard sentence terminators (.!?) followed by space or newline.
     _responseChunks = text
         .split(RegExp(r'(?<=[.!?])\s+'))
         .where((s) => s.trim().isNotEmpty)
@@ -286,7 +346,61 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
   void dispose() {
     _speechToText.stop();
     _flutterTts.stop();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  Widget _buildMessageBubble(String text, bool isUser, ThemeData theme, bool isDark) {
+    return Align(
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.8),
+        decoration: BoxDecoration(
+          color: isUser 
+              ? (isDark ? Colors.grey[800] : Colors.grey[200])
+              : (theme.primaryColor.withAlpha(20)),
+          borderRadius: BorderRadius.circular(20).copyWith(
+            bottomRight: isUser ? const Radius.circular(0) : const Radius.circular(20),
+            bottomLeft: isUser ? const Radius.circular(20) : const Radius.circular(0),
+          ),
+          border: isUser ? null : Border.all(
+            color: theme.primaryColor.withAlpha(50),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isUser ? Icons.person : Icons.record_voice_over, 
+                  size: 14,
+                  color: isUser ? theme.textTheme.bodySmall?.color : theme.primaryColor,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isUser ? 'You' : 'Voice Teacher',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isUser ? theme.textTheme.bodySmall?.color : theme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              style: const TextStyle(fontSize: 16, height: 1.4),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -300,6 +414,34 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
         title: const Text('Voice Teacher'),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.cleaning_services),
+            tooltip: 'New Conversation',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('New Conversation?'),
+                  content: const Text('This will clear the current conversation history.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _clearConversation();
+                      },
+                      child: const Text('Clear'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -315,136 +457,84 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
             ),
             
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Transcript Area
-                    if (_lastWords.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.grey[900] : Colors.grey[100],
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.primaryColor.withAlpha(50),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'You said:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: theme.primaryColor,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              _lastWords,
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                          ],
-                        ),
-                      ),
+              child: _messages.isEmpty && _lastWords.isEmpty && !_isThinking
+                ? Center(
+                    child: Text(
+                      'Tap the microphone to start learning.',
+                      style: TextStyle(color: theme.textTheme.bodySmall?.color),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(24.0),
+                    itemCount: _messages.length + (_lastWords.isNotEmpty ? 1 : 0) + (_isThinking ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      // Messages
+                      if (index < _messages.length) {
+                        final msg = _messages[index];
+                        return _buildMessageBubble(msg.content, msg.role == 'user', theme, isDark);
+                      }
                       
-                    const SizedBox(height: 24),
-                    
-                    // AI Response Area
-                    if (_isThinking)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      )
-                    else if (_aiResponse.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              theme.primaryColor.withAlpha(20),
-                              theme.primaryColor.withAlpha(10),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                      int offset = index - _messages.length;
+                      
+                      // Active listening transcript
+                      if (_lastWords.isNotEmpty) {
+                        if (offset == 0) {
+                          return _buildMessageBubble(_lastWords, true, theme, isDark);
+                        }
+                        offset--;
+                      }
+                      
+                      // Thinking indicator
+                      if (_isThinking && offset == 0) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CircularProgressIndicator(),
                           ),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.primaryColor.withAlpha(80),
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.record_voice_over, size: 16),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Voice Teacher:',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.primaryColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              _aiResponse,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                height: 1.5,
-                              ),
-                            ),
-                            
-                            const SizedBox(height: 20),
-                            // Playback Controls
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.replay),
-                                  onPressed: _replayTts,
-                                  tooltip: 'Replay',
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.stop),
-                                  onPressed: _stopTts,
-                                  tooltip: 'Stop',
-                                ),
-                                IconButton(
-                                  icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-                                  onPressed: () {
-                                    if (_isPlaying) {
-                                      _flutterTts.pause();
-                                    } else {
-                                      _playCurrentChunk();
-                                    }
-                                  },
-                                  tooltip: _isPlaying ? 'Pause' : 'Play',
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                        );
+                      }
+                      
+                      return const SizedBox.shrink();
+                    },
+                  ),
+            ),
+            
+            // Playback Controls if AI just spoke
+            if (_messages.isNotEmpty && _messages.last.role == 'ai' && !_isThinking && !_isListening)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.replay),
+                      onPressed: _replayTts,
+                      tooltip: 'Replay',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.stop),
+                      onPressed: _stopTts,
+                      tooltip: 'Stop',
+                    ),
+                    IconButton(
+                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+                      onPressed: () {
+                        if (_isPlaying) {
+                          _flutterTts.pause();
+                        } else {
+                          _playCurrentChunk();
+                        }
+                      },
+                      tooltip: _isPlaying ? 'Pause' : 'Play',
+                    ),
                   ],
                 ),
               ),
-            ),
             
             // Microphone Button
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 32),
+              padding: const EdgeInsets.only(top: 16, bottom: 32),
               decoration: BoxDecoration(
                 color: theme.scaffoldBackgroundColor,
                 boxShadow: [
