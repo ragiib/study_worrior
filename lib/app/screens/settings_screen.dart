@@ -18,45 +18,48 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const PremiumPageHeader(
-              topLabel: 'Preferences',
-              emoji: '⚙️',
-              title: 'Settings',
-              subtitle: 'Customize your learning experience',
-            ),
-            const SizedBox(height: 36),
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const PremiumPageHeader(
+                topLabel: 'Preferences',
+                emoji: '⚙️',
+                title: 'Settings',
+                subtitle: 'Customize your learning experience',
+              ),
+              const SizedBox(height: 36),
 
-            // ── AI Engine Section (The Centerpiece) ─────────────────
-            const _SectionHeader(title: 'Offline AI Intelligence', icon: Icons.psychology_rounded),
-            const SizedBox(height: 16),
-            _buildAiStorageCard(context),
-            const SizedBox(height: 36),
+              // ── AI Engine Section (The Centerpiece) ─────────────────
+              const _SectionHeader(title: 'Offline AI Intelligence', icon: Icons.psychology_rounded),
+              const SizedBox(height: 16),
+              _buildAiStorageCard(context),
+              const SizedBox(height: 36),
 
-            // ── Appearance Section ──────────────────────────────────
-            const _SectionHeader(title: 'Appearance', icon: Icons.palette_rounded),
-            const SizedBox(height: 16),
-            _buildThemeCard(context),
-            const SizedBox(height: 36),
+              // ── Appearance Section ──────────────────────────────────
+              const _SectionHeader(title: 'Appearance', icon: Icons.palette_rounded),
+              const SizedBox(height: 16),
+              _buildThemeCard(context),
+              const SizedBox(height: 36),
 
-            // ── Notifications Section ───────────────────────────────
-            const _SectionHeader(title: 'Notifications', icon: Icons.notifications_active_rounded),
-            const SizedBox(height: 16),
-            _buildNotificationCard(context),
-            const SizedBox(height: 36),
+              // ── Notifications Section ───────────────────────────────
+              const _SectionHeader(title: 'Notifications', icon: Icons.notifications_active_rounded),
+              const SizedBox(height: 16),
+              _buildNotificationCard(context),
+              const SizedBox(height: 36),
 
-            // ── About Section ───────────────────────────────────────
-            const _SectionHeader(title: 'About', icon: Icons.info_rounded),
-            const SizedBox(height: 16),
-            _buildAboutCard(context),
-            
-            const SizedBox(height: 24),
-          ],
+              // ── About Section ───────────────────────────────────────
+              const _SectionHeader(title: 'About', icon: Icons.info_rounded),
+              const SizedBox(height: 16),
+              _buildAboutCard(context),
+              
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
