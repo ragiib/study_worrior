@@ -73,7 +73,10 @@ class LocalLlamaAiProvider implements AiProvider {
       final loadCommand = LlamaLoad(
         path: path,
         modelParams: modelParams,
-        contextParams: ContextParams()..nCtx = 2048,
+        contextParams: ContextParams()
+          ..nCtx = 2048
+          ..nThreads = 4
+          ..nThreadsBatch = 4,
         samplingParams: SamplerParams()..temp = 0.7,
         verbose: true, // Enable verbose native logging for diagnosis
       );

@@ -32,176 +32,127 @@ class PromptManager {
 
   static String _getSummaryPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Write a VERY short, simple summary of the text below.
+Rules:
+- Maximum 3 short sentences.
+- Use words a 10-year-old understands.
+- Be extremely brief.
 
-Read the chapter carefully and generate a concise chapter summary.
-Focus on main ideas.
-Keep output short and easy to revise.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getDetailedPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Explain the text below simply.
+Rules:
+- Keep it under 150 words.
+- Use short bullet points.
+- Use simple, everyday language.
 
-Read the chapter carefully and generate comprehensive notes.
-Explain all important concepts.
-Preserve chapter structure.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getRevisionPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Extract the top 3 most important facts from the text below for an exam.
+Rules:
+- Exactly 3 short bullet points.
+- No filler words.
 
-Read the chapter carefully and generate exam-focused revision material in bullet points.
-Highlight important facts and formulas.
-Keep content optimized for quick review.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getKeyConceptsPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Identify the main concepts from the text below.
+Rules:
+- List a maximum of 3 concepts.
+- Explain each in 1 short sentence.
+- Very simple words.
 
-Read the chapter carefully and extract important concepts only.
-Provide short explanations for each concept.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getDefinitionsPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Extract key words from the text below and define them.
+Rules:
+- Maximum 3 definitions.
+- Keep definitions to 1 sentence each.
+- Very simple words.
 
-Read the chapter carefully and extract definitions and meanings.
-Format clearly for study.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getFormulasPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Find formulas or math/science equations in the text below.
+Rules:
+- If none exist, say "No formulas found."
+- Keep explanations under 10 words per formula.
 
-Read the chapter carefully and extract any formulas or equations.
-Explain what each formula is used for and what its variables mean.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getExamOrientedPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor preparing a student for an exam.
+Rules:
+- Give 2 short bullet points on what to study from the text below.
+- Give 1 likely exam question.
+- Keep it extremely brief.
 
-Read the chapter carefully and create exam-oriented study notes highlighting what to focus on, along with probable questions.
-Include:
-1. Important Exam Points
-2. Probable Questions
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String _getMcqsPrompt(String text) {
     return '''
-You are an expert educational assistant.
+You are a tutor. Create exactly 3 simple Multiple Choice Questions based on the text below.
+Rules:
+- Provide the correct answer immediately after each question.
+- Very short sentences.
 
-Read the chapter carefully and generate Multiple Choice Questions (MCQs) with the correct answers based on the text.
-Provide the correct answer with a short explanation for each question.
-
-Use simple student-friendly language.
-Focus on exam preparation.
-Do not omit important information.
-Format your response entirely in Markdown. Do not include introductory conversational text.
-
-Chapter Content:
+Text:
 $text
 ''';
   }
 
   static String getDoubtSolverPrompt(String text, String question) {
     return '''
-You are an expert educational assistant. A student has uploaded an image of their study material and has a specific question about it.
+You are a friendly tutor. A student asked: "$question"
 
-First, here is the text extracted from the student's image:
----
+Rules:
+- Answer in 1 or 2 short, simple sentences.
+- Use words a 10-year-old can understand.
+- Be extremely brief. Do not ramble.
+- Base your answer on this text:
 $text
----
-
-The student's question is: "$question"
-
-Please answer the student's question based primarily on the extracted text.
-Use simple, student-friendly language with clear explanations, examples, important points, and step-by-step reasoning when useful.
-If the text doesn't contain enough information to fully answer the question, you can use your general knowledge, but always refer back to the text where possible.
-Format your response entirely in Markdown. Do not include introductory conversational text like "Here is the answer".
 ''';
   }
 
   static String getVoiceTeacherPrompt(String userSpeech) {
     return '''
-You are an expert, encouraging, and friendly Voice Teacher for a student.
-The student has just spoken to you.
+You are a friendly voice tutor. The student said: "$userSpeech"
 
-Student said: "$userSpeech"
-
-Respond to the student in a clear, concise, and conversational manner.
-Your response will be read aloud by a Text-to-Speech (TTS) engine, so:
-- Avoid formatting like bold, italics, markdown tables, or complex lists.
-- Avoid long, complicated sentences.
-- Speak naturally and engagingly.
-- Keep the answer relatively short (a few sentences to a couple of paragraphs max) unless they specifically ask for a long explanation.
+Rules:
+- Reply in exactly 1 or 2 short sentences.
+- Speak naturally and simply, like talking to a 10-year-old.
+- Do NOT use bullet points, bold text, or lists.
+- Be extremely brief.
 ''';
   }
 }
