@@ -9,6 +9,7 @@ import '../../services/ai/ai_provider.dart';
 import '../../services/ocr_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_page_header.dart';
+import '../widgets/animated_ai_loader.dart';
 
 class AiDoubtSolverScreen extends StatefulWidget {
   const AiDoubtSolverScreen({super.key});
@@ -127,17 +128,7 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
       ),
       body: _isProcessing 
         ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 24),
-                Text(
-                  _processingStatus,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
-            ),
+            child: AnimatedAiLoader(customText: _processingStatus),
           )
         : SingleChildScrollView(
             padding: const EdgeInsets.all(20),

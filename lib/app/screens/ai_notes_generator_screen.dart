@@ -8,6 +8,7 @@ import '../../models/ai_note_model.dart';
 import '../providers/ai_notes_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_page_header.dart';
+import '../widgets/animated_ai_loader.dart';
 import 'ai_notes_viewer_screen.dart';
 import 'saved_notes_screen.dart';
 
@@ -93,17 +94,7 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
         builder: (context, provider, _) {
           if (provider.isProcessing) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text(
-                    provider.processingStatus,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+              child: AnimatedAiLoader(customText: provider.processingStatus),
             );
           }
 

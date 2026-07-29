@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../providers/ai_quiz_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_page_header.dart';
+import '../widgets/animated_ai_loader.dart';
 import 'quiz_playing_screen.dart';
 
 class AiQuizGeneratorScreen extends StatefulWidget {
@@ -76,17 +77,7 @@ class _AiQuizGeneratorScreenState extends State<AiQuizGeneratorScreen> {
         builder: (context, provider, _) {
           if (provider.isProcessing) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 24),
-                  Text(
-                    provider.processingStatus,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
-              ),
+              child: AnimatedAiLoader(customText: provider.processingStatus),
             );
           }
 

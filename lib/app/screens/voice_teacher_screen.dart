@@ -10,6 +10,7 @@ import '../../../services/ai/ai_provider.dart';
 import '../../../services/database_service.dart';
 import '../../../models/chat_message.dart';
 import '../widgets/premium_page_header.dart';
+import '../widgets/animated_ai_loader.dart';
 
 class VoiceTeacherScreen extends StatefulWidget {
   const VoiceTeacherScreen({super.key});
@@ -429,30 +430,7 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
             ),
             const SizedBox(height: 8),
             if (text.isEmpty && !isUser)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        theme.primaryColor.withAlpha(200),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Thinking...',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontStyle: FontStyle.italic,
-                      color: theme.primaryColor,
-                    ),
-                  ),
-                ],
-              )
+              const AnimatedAiLoader(isCompact: true)
             else
               Text(
                 text,
