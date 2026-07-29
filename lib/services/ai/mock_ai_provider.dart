@@ -154,4 +154,25 @@ Let me know if you need more examples or a simpler explanation!''';
       yield words[i] + (i < words.length - 1 ? ' ' : '');
     }
   }
+
+  @override
+  Future<String> generateQuiz({
+    required String sourceMaterial,
+    required int numQuestions,
+    required String difficulty,
+    required String type,
+  }) async {
+    await Future.delayed(const Duration(seconds: 2));
+    return '''```json
+[
+  {
+    "question": "What is the powerhouse of the cell?",
+    "options": ["Nucleus", "Mitochondria", "Ribosome", "Endoplasmic Reticulum"],
+    "correctAnswerIndex": 1,
+    "explanation": "Mitochondria are often referred to as the powerhouses of the cell.",
+    "type": "multiple_choice"
+  }
+]
+```''';
+  }
 }

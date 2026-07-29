@@ -22,4 +22,11 @@ abstract class AiProvider {
     required String question,
     List<ChatMessage> history = const [],
   });
+
+  Future<String> generateQuiz({
+    required String sourceMaterial,
+    required int numQuestions,
+    required String difficulty,
+    required String type,
+  });
 }

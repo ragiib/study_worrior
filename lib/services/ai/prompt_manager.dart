@@ -177,4 +177,32 @@ Student: "$userSpeech"
 Voice Teacher:
 ''';
   }
+
+  static String getQuizGeneratorPrompt(String sourceMaterial, int numQuestions, String difficulty, String type) {
+    return '''
+You are an expert educational AI. Generate a $difficulty level quiz with exactly $numQuestions questions based ONLY on the provided text.
+Do NOT invent information that is not supported by the text.
+
+The questions should be of type: $type (if mixed, randomly include multiple_choice and true_false).
+For true/false questions, provide exactly two options: ["True", "False"].
+
+OUTPUT FORMAT:
+You MUST output ONLY a valid JSON array wrapped in a markdown block, like this:
+```json
+[
+  {
+    "question": "Question text here?",
+    "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+    "correctAnswerIndex": 1,
+    "explanation": "Short explanation here.",
+    "type": "multiple_choice"
+  }
+]
+```
+Do NOT include any conversation or introductory text. Output only the JSON.
+
+Source Text:
+$sourceMaterial
+''';
+  }
 }

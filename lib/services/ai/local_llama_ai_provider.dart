@@ -210,4 +210,31 @@ class LocalLlamaAiProvider implements AiProvider {
       rethrow;
     }
   }
+
+  @override
+  Future<String> generateQuiz({
+    required String sourceMaterial,
+    required int numQuestions,
+    required String difficulty,
+    required String type,
+  }) async {
+    final prompt = PromptManager.getQuizGeneratorPrompt(sourceMaterial, numQuestions, difficulty, type);
+    final response = await _generateResponse(prompt);
+    
+    // Attempt to extract JSON from the response. Local models might include conversational fluff.
+    // We look for ```json [content] ```
+    final RegExp jsonRegex = RegExp(r'```json\s*([\s\S]*?)\s*```');
+    final match = jsonRegex.firstMatch(response);
+    if (match != null && match.groupCount >= 1) {
+      return match.group(1)!.trim();
+    }
+    
+    // Fallback: if no markdown block, maybe the whole response is just JSON array
+    if (response.trim().startsWith('[') && response.trim().endsWith(']')) {
+      return response.trim();
+    }
+
+    // If we failed to find JSON, throw an error with the raw response to help debugging
+    throw Exception("AI generated invalid quiz format. Raw response: \$response");
+  }
 }
