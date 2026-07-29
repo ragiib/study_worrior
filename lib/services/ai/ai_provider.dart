@@ -17,4 +17,9 @@ abstract class AiProvider {
     required String question,
     List<ChatMessage> history = const [],
   });
+
+  Stream<String> askVoiceTeacherStream({
+    required String question,
+    List<ChatMessage> history = const [],
+  });
 }

@@ -102,20 +102,14 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
       _speechEnabled = await _speechToText.initialize(
         onStatus: (status) {
           if (status == 'done' || status == 'notListening') {
-            if (mounted) {
-              setState(() {
-                _isListening = false;
-              });
-              // If it automatically stopped and we have words, trigger AI
-              if (_lastWords.isNotEmpty && !_isThinking) {
-                _askAi();
-              }
+            if (_isListening) {
+              _commitSpeech();
             }
           }
         },
         onError: (errorNotification) {
           debugPrint('SpeechError: ${errorNotification.errorMsg}');
-          if (mounted) {
+          if (mounted && _isListening) {
             setState(() {
               _isListening = false;
             });
@@ -229,33 +223,49 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
   }
 
   void _stopListening() async {
-    await _speechToText.stop();
-    setState(() {
-      _isListening = false;
-    });
-    if (_lastWords.isNotEmpty && !_isThinking) {
-      _askAi();
-    }
+    _commitSpeech();
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!_isListening) return; // ignore late callbacks if already committed
+    
     setState(() {
       _lastWords = result.recognizedWords;
     });
     
     // If the speech engine is completely confident it's final
-    if (result.finalResult && _lastWords.isNotEmpty && !_isThinking) {
-      _askAi();
+    if (result.finalResult) {
+      _commitSpeech();
     }
   }
 
-  Future<void> _askAi() async {
-    if (_lastWords.trim().isEmpty) return;
+  Future<void> _commitSpeech() async {
+    final text = _lastWords.trim();
+    if (text.isEmpty) {
+      setState(() => _isListening = false);
+      await _speechToText.stop();
+      return;
+    }
     
-    final question = _lastWords;
+    if (_isThinking) return;
+
+    setState(() {
+      _isListening = false;
+      _isThinking = true;
+    });
+    await _speechToText.stop();
+    
+    // clear lastWords after capturing so UI transitions cleanly
+    _lastWords = '';
+    
+    _askAi(text);
+  }
+
+  Future<void> _askAi(String question) async {
+    if (question.isEmpty) return;
+    
     setState(() {
       _messages.add(ChatMessage(role: 'user', content: question));
-      _lastWords = '';
       _isThinking = true;
     });
     _saveHistory();
@@ -267,24 +277,46 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
       // Pass history excluding the current question we just added
       final history = _messages.sublist(0, _messages.length - 1);
       
-      final response = await aiProvider.askVoiceTeacher(
+      // Add an empty AI message that we will populate via stream
+      setState(() {
+        _messages.add(ChatMessage(role: 'ai', content: ''));
+        _isThinking = false; // We use the empty message to indicate it's responding
+      });
+      _scrollToBottom();
+      
+      final stream = aiProvider.askVoiceTeacherStream(
         question: question,
         history: history,
       );
       
-      if (mounted) {
+      final StringBuffer responseBuffer = StringBuffer();
+      
+      await for (final chunk in stream) {
+        if (!mounted) break;
+        responseBuffer.write(chunk);
         setState(() {
-          _messages.add(ChatMessage(role: 'ai', content: response));
-          _isThinking = false;
+          // Replace the last message with the updated content
+          _messages.last = ChatMessage(role: 'ai', content: responseBuffer.toString().trimLeft());
         });
-        _saveHistory();
         _scrollToBottom();
-        _prepareAndPlayTts(response);
+      }
+      
+      if (mounted) {
+        _saveHistory();
+        final finalResponse = _messages.last.content;
+        if (finalResponse.isNotEmpty) {
+          _prepareAndPlayTts(finalResponse);
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(role: 'ai', content: "Sorry, I had trouble thinking of an answer. Let's try again."));
+          // If we had an empty message, replace it
+          if (_messages.isNotEmpty && _messages.last.role == 'ai' && _messages.last.content.isEmpty) {
+            _messages.last = ChatMessage(role: 'ai', content: "Sorry, I had trouble thinking of an answer. Let's try again.");
+          } else {
+            _messages.add(ChatMessage(role: 'ai', content: "Sorry, I had trouble thinking of an answer. Let's try again."));
+          }
           _isThinking = false;
         });
         _saveHistory();

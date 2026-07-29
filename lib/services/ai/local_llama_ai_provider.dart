@@ -21,7 +21,19 @@ class LocalLlamaAiProvider implements AiProvider {
   }
 
   Future<void> _ensureInitialized() async {
-    if (_llamaParent != null) return;
+    // If we have an initialized model, check if the desired model has changed.
+    if (_llamaParent != null) {
+      if (_currentModelPath == _modelManager.modelPath) {
+        return; // Already initialized with the correct model
+      } else {
+        // The user switched models! Dispose the old one.
+        debugPrint('[LocalLlamaAiProvider] Model changed! Unloading old model...');
+        _llamaParent!.dispose();
+        _llamaParent = null;
+        _currentModelPath = null;
+      }
+    }
+    
     if (_isInitializing) {
       // Wait for initialization to finish if another call triggered it.
       while (_isInitializing) {
@@ -99,13 +111,15 @@ class LocalLlamaAiProvider implements AiProvider {
     }
   }
 
-  Future<String> _generateResponse(String prompt) async {
+  Future<String> _generateResponse(String prompt, {bool clearCache = true}) async {
     await _ensureInitialized();
     final parent = _llamaParent!;
 
-    // Completely clear the previous context and KV cache
-    // so features like Note Generator and Doubt Solver do not mix state.
-    await parent.clear();
+    // Only clear the context if explicitly requested.
+    // Voice Teacher maintains conversation history, so we don't clear it.
+    if (clearCache) {
+      await parent.clear();
+    }
 
     final buffer = StringBuffer();
     
@@ -150,6 +164,50 @@ class LocalLlamaAiProvider implements AiProvider {
     List<ChatMessage> history = const [],
   }) async {
     final prompt = PromptManager.getVoiceTeacherPrompt(question, history);
-    return _generateResponse(prompt);
+    // Do not clear the cache for Voice Teacher to allow fast history processing
+    return _generateResponse(prompt, clearCache: false);
+  }
+
+  @override
+  Stream<String> askVoiceTeacherStream({
+    required String question,
+    List<ChatMessage> history = const [],
+  }) async* {
+    await _ensureInitialized();
+    final parent = _llamaParent!;
+    
+    // Do not clear the cache for Voice Teacher to allow fast history processing
+    // await parent.clear(); 
+    
+    final prompt = PromptManager.getVoiceTeacherPrompt(question, history);
+    
+    // Send prompt and yield stream
+    try {
+      final promptId = await parent.sendPrompt(prompt);
+      
+      // We can iterate the stream manually or listen.
+      // parent.stream gives us tokens as they arrive.
+      
+      final controller = StreamController<String>();
+      final sub = parent.stream.listen((chunk) {
+        controller.add(chunk);
+      });
+      
+      // Await completion in background
+      parent.waitForCompletion(promptId).then((_) {
+        sub.cancel();
+        controller.close();
+      }).catchError((e) {
+        sub.cancel();
+        controller.addError(e);
+        controller.close();
+      });
+      
+      yield* controller.stream;
+      
+    } catch (e) {
+      debugPrint('LocalLlamaAiProvider Stream Error: $e');
+      rethrow;
+    }
   }
 }

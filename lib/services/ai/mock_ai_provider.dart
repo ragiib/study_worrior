@@ -139,4 +139,19 @@ Let me know if you need more examples or a simpler explanation!''';
     await Future.delayed(const Duration(seconds: 2));
     return "This is a mock response from your friendly Voice Teacher. You asked: $question. I hope this helps you understand the topic better. Keep up the great work!";
   }
+
+  @override
+  Stream<String> askVoiceTeacherStream({
+    required String question,
+    List<ChatMessage> history = const [],
+  }) async* {
+    await Future.delayed(const Duration(milliseconds: 500));
+    final text = "This is a streaming mock response from your friendly Voice Teacher. You asked: $question. I hope this helps you understand the topic better. Keep up the great work!";
+    final words = text.split(' ');
+    
+    for (int i = 0; i < words.length; i++) {
+      await Future.delayed(const Duration(milliseconds: 50));
+      yield words[i] + (i < words.length - 1 ? ' ' : '');
+    }
+  }
 }
