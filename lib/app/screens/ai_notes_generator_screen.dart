@@ -22,6 +22,7 @@ class AiNotesGeneratorScreen extends StatefulWidget {
 class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
   NoteType _selectedType = NoteType.summary;
   final TextEditingController _titleController = TextEditingController();
+  bool _isCompletingSequence = false;
 
   @override
   void dispose() {
@@ -40,12 +41,23 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
 
     final note = await provider.generateNotes(_selectedType, _titleController.text);
     if (note != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => AiNotesViewerScreen(note: note),
-        ),
-      );
+      setState(() {
+        _isCompletingSequence = true;
+      });
+      
+      await Future.delayed(const Duration(milliseconds: 2200));
+      
+      if (mounted) {
+        setState(() {
+          _isCompletingSequence = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AiNotesViewerScreen(note: note),
+          ),
+        );
+      }
     } else if (mounted) {
       final error = provider.lastError ?? 'Unknown error. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -92,9 +104,12 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
       ),
       body: Consumer<AiNotesProvider>(
         builder: (context, provider, _) {
-          if (provider.isProcessing) {
+          if (provider.isProcessing || _isCompletingSequence) {
             return Center(
-              child: AnimatedAiLoader(customText: provider.processingStatus),
+              child: AnimatedAiLoader(
+                customText: _isCompletingSequence ? null : provider.processingStatus,
+                isSuccessSequence: _isCompletingSequence,
+              ),
             );
           }
 

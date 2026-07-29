@@ -25,6 +25,7 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
   final OcrService _ocrService = OcrService();
 
   bool _isProcessing = false;
+  bool _isCompletingSequence = false;
   String _processingStatus = '';
   String? _answer;
   String? _error;
@@ -96,8 +97,17 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
       );
 
       setState(() {
-        _answer = result;
+        _isCompletingSequence = true;
       });
+      
+      await Future.delayed(const Duration(milliseconds: 2200));
+      
+      if (mounted) {
+        setState(() {
+          _isCompletingSequence = false;
+          _answer = result;
+        });
+      }
     } catch (e) {
       String errorMessage = e.toString();
       if (errorMessage.startsWith('Exception: ')) {
@@ -109,7 +119,7 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
     } finally {
       setState(() {
         _isProcessing = false;
-        _processingStatus = '';
+        _isCompletingSequence = false;
       });
     }
   }
@@ -126,9 +136,12 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: _isProcessing 
+      body: _isProcessing || _isCompletingSequence
         ? Center(
-            child: AnimatedAiLoader(customText: _processingStatus),
+            child: AnimatedAiLoader(
+              customText: _isCompletingSequence ? null : _processingStatus,
+              isSuccessSequence: _isCompletingSequence,
+            ),
           )
         : SingleChildScrollView(
             padding: const EdgeInsets.all(20),

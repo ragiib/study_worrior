@@ -22,6 +22,7 @@ class _AiQuizGeneratorScreenState extends State<AiQuizGeneratorScreen> {
   int _numQuestions = 5;
   String _difficulty = 'Medium';
   String _type = 'Multiple Choice';
+  bool _isCompletingSequence = false;
 
   @override
   void dispose() {
@@ -43,12 +44,23 @@ class _AiQuizGeneratorScreenState extends State<AiQuizGeneratorScreen> {
     );
 
     if (quiz != null && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QuizPlayingScreen(quiz: quiz),
-        ),
-      );
+      setState(() {
+        _isCompletingSequence = true;
+      });
+      // Wait for the final animation sequence to finish
+      await Future.delayed(const Duration(milliseconds: 2200));
+      
+      if (mounted) {
+        setState(() {
+          _isCompletingSequence = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => QuizPlayingScreen(quiz: quiz),
+          ),
+        );
+      }
     } else if (mounted) {
       final error = provider.lastError ?? 'Unknown error. Please try again.';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,9 +87,12 @@ class _AiQuizGeneratorScreenState extends State<AiQuizGeneratorScreen> {
       ),
       body: Consumer<AiQuizProvider>(
         builder: (context, provider, _) {
-          if (provider.isProcessing) {
+          if (provider.isProcessing || _isCompletingSequence) {
             return Center(
-              child: AnimatedAiLoader(customText: provider.processingStatus),
+              child: AnimatedAiLoader(
+                customText: _isCompletingSequence ? null : provider.processingStatus,
+                isSuccessSequence: _isCompletingSequence,
+              ),
             );
           }
 
