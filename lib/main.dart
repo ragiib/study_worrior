@@ -91,6 +91,7 @@ void main() async {
         // AI Provider (Local Inference)
         Provider<AiProvider>(
           create: (context) => LocalLlamaAiProvider(context.read<AiModelManager>()),
+          lazy: false,
         ),
         // AI Notes Management
         ChangeNotifierProxyProvider<AiProvider, AiNotesProvider>(

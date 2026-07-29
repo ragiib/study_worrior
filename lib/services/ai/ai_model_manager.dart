@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
@@ -9,6 +10,8 @@ class AiModelManager extends ChangeNotifier {
   // When Qwen 3 is available in GGUF format, update this URL.
   static const String modelUrl = 'https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf';
   static const String modelFileName = 'qwen2.5-0.5b-instruct-q4_k_m.gguf';
+  // Minimum expected file size (bytes). The full Q4_K_M is ~398 MB.
+  static const int minModelBytes = 350 * 1024 * 1024;
 
   bool _isDownloaded = false;
   bool get isDownloaded => _isDownloaded;
@@ -24,6 +27,15 @@ class AiModelManager extends ChangeNotifier {
 
   CancelToken? _cancelToken;
 
+  // Completer that resolves once the initial model-existence check finishes.
+  // Callers should `await manager.ready` before reading modelPath / isDownloaded
+  // to avoid a race with the async constructor check.
+  final Completer<void> _readyCompleter = Completer<void>();
+
+  /// Resolves when the initial model-existence check on disk has completed.
+  /// Always await this before reading [modelPath] or [isDownloaded].
+  Future<void> get ready => _readyCompleter.future;
+
   AiModelManager() {
     _checkModelExists();
   }
@@ -31,30 +43,45 @@ class AiModelManager extends ChangeNotifier {
   Future<void> _checkModelExists() async {
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final file = File('${dir.path}/$modelFileName');
-      if (await file.exists()) {
+      final filePath = '${dir.path}/$modelFileName';
+      final file = File(filePath);
+
+      final exists = await file.exists();
+      debugPrint('[AiModelManager] checking model: $filePath');
+      debugPrint('[AiModelManager] file exists: $exists');
+
+      if (exists) {
         final length = await file.length();
-        // The Qwen 2.5 0.5B Q4_K_M model is ~398 MB.
-        // Ensure the file is at least 350 MB to prevent loading partial/corrupted downloads.
-        if (length > 350 * 1024 * 1024) {
+        debugPrint('[AiModelManager] file size: $length bytes');
+
+        // Ensure the file is at least the minimum expected size.
+        if (length > minModelBytes) {
           _isDownloaded = true;
-          _modelPath = file.path;
+          _modelPath = filePath;
+          debugPrint('[AiModelManager] model ready at: $_modelPath');
           notifyListeners();
         } else {
-          // If the file exists but is too small, it's a corrupted/partial download. Delete it.
+          // Partial/corrupted download — remove it so the user can re-download.
+          debugPrint('[AiModelManager] file too small ($length bytes), deleting.');
           await file.delete();
           _isDownloaded = false;
           _modelPath = null;
         }
       }
-      
-      // Also clean up any lingering temporary download files
-      final tempFile = File('${dir.path}/$modelFileName.tmp');
+
+      // Also clean up any lingering temporary download files.
+      final tempFile = File('$filePath.tmp');
       if (await tempFile.exists()) {
+        debugPrint('[AiModelManager] removing stale .tmp file');
         await tempFile.delete();
       }
     } catch (e) {
-      debugPrint('Error checking model existence: $e');
+      debugPrint('[AiModelManager] error checking model existence: $e');
+    } finally {
+      // Always complete the ready future so waiters are never stuck.
+      if (!_readyCompleter.isCompleted) {
+        _readyCompleter.complete();
+      }
     }
   }
 
@@ -98,8 +125,15 @@ class AiModelManager extends ChangeNotifier {
         await tempFile.rename(savePath);
       }
 
+      final finalLength = await File(savePath).length();
+      debugPrint('[AiModelManager] download complete. path: $savePath, size: $finalLength bytes');
+
       _isDownloaded = true;
       _modelPath = savePath;
+      // Ensure ready completer is resolved for callers that awaited it before download.
+      if (!_readyCompleter.isCompleted) {
+        _readyCompleter.complete();
+      }
     } catch (e) {
       debugPrint('Model download error: $e');
       if (e is DioException && CancelToken.isCancel(e)) {

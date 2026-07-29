@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:llama_cpp_dart/llama_cpp_dart.dart';
 import 'ai_model_manager.dart';
@@ -14,12 +15,14 @@ class LocalLlamaAiProvider implements AiProvider {
 
   final AiModelManager _modelManager;
 
-  LocalLlamaAiProvider(this._modelManager);
+  LocalLlamaAiProvider(this._modelManager) {
+    _ensureInitialized().catchError((e) => debugPrint('[LocalLlamaAiProvider] early init failed: $e'));
+  }
 
   Future<void> _ensureInitialized() async {
     if (_llamaParent != null) return;
     if (_isInitializing) {
-      // Wait for initialization to finish if another call triggered it
+      // Wait for initialization to finish if another call triggered it.
       while (_isInitializing) {
         await Future.delayed(const Duration(milliseconds: 100));
       }
@@ -28,26 +31,61 @@ class LocalLlamaAiProvider implements AiProvider {
 
     _isInitializing = true;
     try {
+      // Wait for the async constructor check to finish so modelPath is populated.
+      await _modelManager.ready;
+
       final path = _modelManager.modelPath;
 
       if (path == null || path.isEmpty || !_modelManager.isDownloaded) {
         throw Exception('Offline AI model not ready. Please download the model first.');
       }
 
+      // --- Pre-flight: verify the file actually exists and is complete ---
+      final modelFile = File(path);
+      final fileExists = await modelFile.exists();
+      final fileSize = fileExists ? await modelFile.length() : 0;
+      debugPrint('[LocalLlamaAiProvider] model path : $path');
+      debugPrint('[LocalLlamaAiProvider] file exists: $fileExists');
+      debugPrint('[LocalLlamaAiProvider] file size  : $fileSize bytes');
+
+      if (!fileExists) {
+        throw Exception(
+          'Model file not found on disk at: $path\n'
+          'Please delete and re-download the model from Settings.',
+        );
+      }
+      if (fileSize < AiModelManager.minModelBytes) {
+        throw Exception(
+          'Model file is incomplete ($fileSize bytes). '
+          'Please delete and re-download the model from Settings.',
+        );
+      }
+
       _currentModelPath = path;
 
-      debugPrint('LocalLlamaAiProvider: Initializing with model at $path');
+      final modelParams = ModelParams();
+      // Use CPU-only inference (nGpuLayers = 0) so the model works on both
+      // the Android emulator (no GPU) and physical devices. The 0.5B model
+      // is small enough for CPU inference in reasonable time.
+      modelParams.nGpuLayers = 0;
+      modelParams.mainGpu = -1; // -1 bypasses the GPU device check when 0 devices are available
 
       final loadCommand = LlamaLoad(
         path: path,
-        modelParams: ModelParams(),
+        modelParams: modelParams,
         contextParams: ContextParams()..nCtx = 2048,
         samplingParams: SamplerParams()..temp = 0.7,
+        verbose: true, // Enable verbose native logging for diagnosis
       );
 
+      debugPrint('[LocalLlamaAiProvider] calling LlamaParent.init() ...');
       _llamaParent = LlamaParent(loadCommand, ChatMLFormat());
       await _llamaParent!.init();
-      debugPrint('LocalLlamaAiProvider: Initialization successful');
+      debugPrint('[LocalLlamaAiProvider] initialization successful');
+    } catch (e) {
+      debugPrint('[LocalLlamaAiProvider] initialization failed: $e');
+      _llamaParent = null; // ensure we retry on next call
+      rethrow;
     } finally {
       _isInitializing = false;
     }

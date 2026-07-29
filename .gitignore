@@ -47,3 +47,10 @@ app.*.map.json
 # Environment Variables & API Keys
 .env
 lib/config/api_config.dart
+
+# Local llama_cpp_dart override (large C++ source, rebuild from pub cache)
+/local_llama_dart/
+
+temp_base.apk
+
+temp_base.apk
