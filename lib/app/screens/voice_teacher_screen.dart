@@ -280,7 +280,7 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
       // Add an empty AI message that we will populate via stream
       setState(() {
         _messages.add(ChatMessage(role: 'ai', content: ''));
-        _isThinking = false; // We use the empty message to indicate it's responding
+        // Keep _isThinking = true while generation happens
       });
       _scrollToBottom();
       
@@ -303,6 +303,9 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
       
       if (mounted) {
         _saveHistory();
+        setState(() {
+          _isThinking = false;
+        });
         final finalResponse = _messages.last.content;
         if (finalResponse.isNotEmpty) {
           _prepareAndPlayTts(finalResponse);
@@ -425,10 +428,36 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              text,
-              style: const TextStyle(fontSize: 16, height: 1.4),
-            ),
+            if (text.isEmpty && !isUser)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        theme.primaryColor.withAlpha(200),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Thinking...',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontStyle: FontStyle.italic,
+                      color: theme.primaryColor,
+                    ),
+                  ),
+                ],
+              )
+            else
+              Text(
+                text,
+                style: const TextStyle(fontSize: 16, height: 1.4),
+              ),
           ],
         ),
       ),
@@ -499,7 +528,7 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(24.0),
-                    itemCount: _messages.length + (_lastWords.isNotEmpty ? 1 : 0) + (_isThinking ? 1 : 0),
+                    itemCount: _messages.length + (_lastWords.isNotEmpty ? 1 : 0),
                     itemBuilder: (context, index) {
                       // Messages
                       if (index < _messages.length) {
@@ -515,16 +544,6 @@ class _VoiceTeacherScreenState extends State<VoiceTeacherScreen> {
                           return _buildMessageBubble(_lastWords, true, theme, isDark);
                         }
                         offset--;
-                      }
-                      
-                      // Thinking indicator
-                      if (_isThinking && offset == 0) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
                       }
                       
                       return const SizedBox.shrink();
