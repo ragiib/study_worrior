@@ -209,4 +209,23 @@ class OllamaAiProvider implements AiProvider {
       rethrow;
     }
   }
+
+  @override
+  Stream<String> askVoiceTeacherStream({
+    required String question,
+    List<ChatMessage> history = const [],
+  }) async* {
+    yield await askVoiceTeacher(question: question, history: history);
+  }
+
+  @override
+  Future<String> generateQuiz({
+    required String sourceMaterial,
+    required int numQuestions,
+    required String difficulty,
+    required String type,
+  }) async {
+    final prompt = PromptManager.getQuizGeneratorPrompt(sourceMaterial, numQuestions, difficulty, type);
+    return _generateResponse(prompt);
+  }
 }
