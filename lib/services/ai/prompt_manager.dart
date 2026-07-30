@@ -195,7 +195,8 @@ You MUST output ONLY a valid JSON array wrapped in a markdown block, like this:
     "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
     "correctAnswerIndex": 1,
     "explanation": "Short explanation here.",
-    "type": "multiple_choice"
+    "type": "multiple_choice",
+    "topic": "Short subject/topic tag here"
   }
 ]
 ```

@@ -4,6 +4,7 @@ class QuizQuestion {
   final int correctAnswerIndex;
   final String explanation;
   final String type; // 'multiple_choice', 'true_false'
+  final String? topic;
 
   QuizQuestion({
     required this.question,
@@ -11,6 +12,7 @@ class QuizQuestion {
     required this.correctAnswerIndex,
     required this.explanation,
     required this.type,
+    this.topic,
   });
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class QuizQuestion {
       correctAnswerIndex: json['correctAnswerIndex'] ?? 0,
       explanation: json['explanation'] ?? '',
       type: json['type'] ?? 'multiple_choice',
+      topic: json['topic'],
     );
   }
 
@@ -30,6 +33,7 @@ class QuizQuestion {
       'correctAnswerIndex': correctAnswerIndex,
       'explanation': explanation,
       'type': type,
+      if (topic != null) 'topic': topic,
     };
   }
 }
@@ -49,10 +53,12 @@ class Quiz {
 class QuizResult {
   final Quiz quiz;
   final Map<int, int> userAnswers; // questionIndex -> selectedOptionIndex
+  final int? timeTakenSeconds; // For Mock Tests with timers
 
   QuizResult({
     required this.quiz,
     required this.userAnswers,
+    this.timeTakenSeconds,
   });
 
   int get score {

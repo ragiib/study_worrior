@@ -10,6 +10,7 @@ import 'ai_notes_generator_screen.dart';
 import 'ai_doubt_solver_screen.dart';
 import 'voice_teacher_screen.dart';
 import 'ai_quiz_generator_screen.dart';
+import 'mock_test_generator_screen.dart';
 
 class PremiumAiScreen extends StatelessWidget {
   const PremiumAiScreen({super.key});
@@ -58,6 +59,10 @@ class PremiumAiScreen extends StatelessWidget {
 
   void _navigateToAiQuizGenerator(BuildContext context) {
     _checkAndNavigate(context, const AiQuizGeneratorScreen());
+  }
+
+  void _navigateToMockTestGenerator(BuildContext context) {
+    _checkAndNavigate(context, const MockTestGeneratorScreen());
   }
 
   @override
@@ -132,8 +137,8 @@ class PremiumAiScreen extends StatelessWidget {
                       title: 'Mock Test\nGenerator',
                       icon: Icons.assignment_rounded,
                       gradientColors: const [Color(0xFF2563EB), Color(0xFF3B82F6)],
-                      isLocked: true,
-                      onTap: () => _handleLockedFeatureTap(context),
+                      isLocked: false,
+                      onTap: () => _navigateToMockTestGenerator(context),
                     ),
                     PremiumFeatureCard(
                       title: 'Important\nPredictor',
