@@ -32,9 +32,9 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
 
   void _generateNotes(BuildContext context) async {
     final provider = Provider.of<AiNotesProvider>(context, listen: false);
-    if (provider.selectedImages.isEmpty) {
+    if (provider.selectedImages.isEmpty && provider.selectedPdf == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select at least one image.')),
+        const SnackBar(content: Text('Please select at least one image or a PDF.')),
       );
       return;
     }
@@ -134,6 +134,19 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
+                        onPressed: () => provider.pickPdf(),
+                        icon: const Icon(Icons.picture_as_pdf),
+                        label: const Text('PDF'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade400,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
                         onPressed: () => provider.pickImages(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library),
                         label: const Text('Gallery'),
@@ -144,7 +157,7 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => provider.pickImages(ImageSource.camera),
@@ -159,7 +172,60 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 14, color: Colors.grey),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Recommended: Upload a PDF for larger or multi-page study material.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                if (provider.selectedPdf != null) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.red.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.picture_as_pdf, color: Colors.red.shade600, size: 32),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                provider.selectedPdf!.name,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                provider.formatFileSize(provider.selectedPdf!.size),
+                                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => provider.removePdf(),
+                          color: Colors.red.shade800,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 if (provider.selectedImages.isNotEmpty) ...[
                   SizedBox(
@@ -267,7 +333,7 @@ class _AiNotesGeneratorScreenState extends State<AiNotesGeneratorScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: provider.selectedImages.isEmpty
+                    onPressed: (provider.selectedImages.isEmpty && provider.selectedPdf == null)
                         ? null
                         : () => _generateNotes(context),
                     style: ElevatedButton.styleFrom(

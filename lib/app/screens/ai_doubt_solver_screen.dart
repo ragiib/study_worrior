@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import '../../services/ai/ai_provider.dart';
 import '../../services/ocr_service.dart';
+import '../../services/pdf_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_page_header.dart';
 import '../widgets/animated_ai_loader.dart';
@@ -21,8 +23,10 @@ class AiDoubtSolverScreen extends StatefulWidget {
 class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
   final TextEditingController _questionController = TextEditingController();
   XFile? _selectedImage;
+  PlatformFile? _selectedPdf;
   
   final OcrService _ocrService = OcrService();
+  final PdfService _pdfService = PdfService();
 
   bool _isProcessing = false;
   bool _isCompletingSequence = false;
@@ -57,10 +61,29 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
     });
   }
 
+  Future<void> _pickPdf() async {
+    final pdf = await _pdfService.pickPdf();
+    if (pdf != null) {
+      setState(() {
+        _selectedPdf = pdf;
+        _answer = null;
+        _error = null;
+      });
+    }
+  }
+
+  void _removePdf() {
+    setState(() {
+      _selectedPdf = null;
+      _answer = null;
+      _error = null;
+    });
+  }
+
   Future<void> _askQuestion(String question) async {
-    if (_selectedImage == null) {
+    if (_selectedImage == null && _selectedPdf == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an image first.')),
+        const SnackBar(content: Text('Please select an image or a PDF first.')),
       );
       return;
     }
@@ -74,16 +97,30 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
 
     setState(() {
       _isProcessing = true;
-      _processingStatus = 'Extracting text from image...';
+      _processingStatus = 'Processing document...';
       _answer = null;
       _error = null;
     });
 
     try {
-      final extractedText = await _ocrService.extractTextFromImage(_selectedImage!.path);
+      String extractedText = '';
+      
+      if (_selectedPdf != null) {
+        setState(() {
+          _processingStatus = 'Extracting text from PDF...';
+        });
+        extractedText += await _pdfService.extractTextFromPdf(_selectedPdf!.path!) + '\n\n';
+      }
+      
+      if (_selectedImage != null) {
+        setState(() {
+          _processingStatus = 'Extracting text from image...';
+        });
+        extractedText += await _ocrService.extractTextFromImage(_selectedImage!.path);
+      }
 
       if (extractedText.trim().isEmpty) {
-        throw Exception("No text could be extracted from the image.");
+        throw Exception("No text could be extracted from the file.");
       }
 
       setState(() {
@@ -157,9 +194,22 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
                 const SizedBox(height: 24),
                 
                 // Image Selection
-                if (_selectedImage == null) ...[
+                if (_selectedImage == null && _selectedPdf == null) ...[
                   Row(
                     children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _pickPdf(),
+                          icon: const Icon(Icons.picture_as_pdf),
+                          label: const Text('PDF'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade400,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _pickImage(ImageSource.gallery),
@@ -172,7 +222,7 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: () => _pickImage(ImageSource.camera),
@@ -187,44 +237,97 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
                       ),
                     ],
                   ),
-                ] else ...[
-                  Stack(
+                  const SizedBox(height: 8),
+                  Row(
                     children: [
-                      Container(
-                        height: 200,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.withAlpha(50)),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: kIsWeb
-                            ? Image.network(
-                                _selectedImage!.path,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.file(
-                                File(_selectedImage!.path),
-                                fit: BoxFit.cover,
-                              ),
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: GestureDetector(
-                          onTap: _removeImage,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.close, size: 20, color: Colors.white),
-                          ),
+                      const Icon(Icons.info_outline, size: 14, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Recommended: Upload a PDF for larger or multi-page study material.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                         ),
                       ),
                     ],
                   ),
+                ] else ...[
+                  if (_selectedPdf != null)
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.picture_as_pdf, color: Colors.red.shade600, size: 32),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _selectedPdf!.name,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                Text(
+                                  _pdfService.formatFileSize(_selectedPdf!.size),
+                                  style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: _removePdf,
+                            color: Colors.red.shade800,
+                          ),
+                        ],
+                      ),
+                    ),
+                  
+                  if (_selectedImage != null)
+                    Stack(
+                      children: [
+                        Container(
+                          height: 200,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.withAlpha(50)),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: kIsWeb
+                              ? Image.network(
+                                  _selectedImage!.path,
+                                  fit: BoxFit.cover,
+                                )
+                              : Image.file(
+                                  File(_selectedImage!.path),
+                                  fit: BoxFit.cover,
+                                ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: _removeImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close, size: 20, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
                 
                 const SizedBox(height: 24),

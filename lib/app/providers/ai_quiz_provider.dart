@@ -2,16 +2,23 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:file_picker/file_picker.dart';
+
 import '../../models/quiz_model.dart';
 import '../../services/ai/ai_provider.dart';
 import '../../services/ocr_service.dart';
+import '../../services/pdf_service.dart';
 
 class AiQuizProvider extends ChangeNotifier {
   final OcrService _ocrService = OcrService();
+  final PdfService _pdfService = PdfService();
   AiProvider? _aiProvider;
 
   final List<XFile> _selectedImages = [];
   List<XFile> get selectedImages => _selectedImages;
+
+  PlatformFile? _selectedPdf;
+  PlatformFile? get selectedPdf => _selectedPdf;
 
   bool _isProcessing = false;
   bool get isProcessing => _isProcessing;
@@ -52,8 +59,24 @@ class AiQuizProvider extends ChangeNotifier {
     }
   }
 
-  void clearImages() {
+  Future<void> pickPdf() async {
+    final pdf = await _pdfService.pickPdf();
+    if (pdf != null) {
+      _selectedPdf = pdf;
+      notifyListeners();
+    }
+  }
+
+  void removePdf() {
+    _selectedPdf = null;
+    notifyListeners();
+  }
+
+  String formatFileSize(int bytes) => _pdfService.formatFileSize(bytes);
+
+  void clearImagesAndPdf() {
     _selectedImages.clear();
+    _selectedPdf = null;
     notifyListeners();
   }
 
@@ -63,8 +86,8 @@ class AiQuizProvider extends ChangeNotifier {
     required String difficulty,
     required String type,
   }) async {
-    if (_selectedImages.isEmpty && (manualText == null || manualText.trim().isEmpty)) {
-      _lastError = "Please provide some text or select an image.";
+    if (_selectedImages.isEmpty && _selectedPdf == null && (manualText == null || manualText.trim().isEmpty)) {
+      _lastError = "Please provide some text, select an image, or upload a PDF.";
       notifyListeners();
       return null;
     }
@@ -76,6 +99,18 @@ class AiQuizProvider extends ChangeNotifier {
     try {
       String extractedText = manualText?.trim() ?? '';
       
+      if (_selectedPdf != null) {
+        _processingStatus = 'Extracting text from PDF...';
+        notifyListeners();
+        
+        final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
+        if (extractedText.isNotEmpty) {
+          extractedText += "\n\n" + pdfText;
+        } else {
+          extractedText = pdfText;
+        }
+      }
+
       if (_selectedImages.isNotEmpty) {
         _processingStatus = 'Extracting text from images...';
         notifyListeners();
@@ -115,7 +150,7 @@ class AiQuizProvider extends ChangeNotifier {
         throw Exception("AI failed to generate any questions.");
       }
 
-      clearImages();
+      clearImagesAndPdf();
       return quiz;
     } catch (e) {
       String errorMessage = e.toString();

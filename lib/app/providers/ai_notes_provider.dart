@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 
+import 'package:file_picker/file_picker.dart';
+
 import '../../models/ai_note_model.dart';
 import '../../services/ai/ai_provider.dart';
 import '../../services/ocr_service.dart';
+import '../../services/pdf_service.dart';
 import '../../services/database_service.dart';
 
 class AiNotesProvider extends ChangeNotifier {
   final DatabaseService _dbService;
   final OcrService _ocrService = OcrService();
+  final PdfService _pdfService = PdfService();
   AiProvider? _aiProvider;
   final _uuid = const Uuid();
 
@@ -18,6 +22,9 @@ class AiNotesProvider extends ChangeNotifier {
 
   final List<XFile> _selectedImages = [];
   List<XFile> get selectedImages => _selectedImages;
+
+  PlatformFile? _selectedPdf;
+  PlatformFile? get selectedPdf => _selectedPdf;
 
   bool _isProcessing = false;
   bool get isProcessing => _isProcessing;
@@ -66,24 +73,64 @@ class AiNotesProvider extends ChangeNotifier {
     }
   }
 
-  void clearImages() {
+  Future<void> pickPdf() async {
+    final pdf = await _pdfService.pickPdf();
+    if (pdf != null) {
+      _selectedPdf = pdf;
+      notifyListeners();
+    }
+  }
+
+  void removePdf() {
+    _selectedPdf = null;
+    notifyListeners();
+  }
+
+  String formatFileSize(int bytes) => _pdfService.formatFileSize(bytes);
+
+  void clearImagesAndPdf() {
     _selectedImages.clear();
+    _selectedPdf = null;
     notifyListeners();
   }
 
   Future<AiNote?> generateNotes(NoteType type, String title) async {
-    if (_selectedImages.isEmpty) return null;
+    if (_selectedImages.isEmpty && _selectedPdf == null) return null;
 
     _isProcessing = true;
-    _processingStatus = 'Extracting text from images...';
     notifyListeners();
 
     try {
-      final imagePaths = _selectedImages.map((e) => e.path).toList();
-      final extractedText = await _ocrService.extractTextFromMultipleImages(imagePaths);
+      String extractedText = '';
+
+      if (_selectedPdf != null) {
+        _processingStatus = 'Extracting text from PDF...';
+        notifyListeners();
+        
+        final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
+        if (extractedText.isNotEmpty) {
+          extractedText += "\n\n" + pdfText;
+        } else {
+          extractedText = pdfText;
+        }
+      }
+
+      if (_selectedImages.isNotEmpty) {
+        _processingStatus = 'Extracting text from images...';
+        notifyListeners();
+        
+        final imagePaths = _selectedImages.map((e) => e.path).toList();
+        final ocrText = await _ocrService.extractTextFromMultipleImages(imagePaths);
+        
+        if (extractedText.isNotEmpty) {
+          extractedText += "\n\n" + ocrText;
+        } else {
+          extractedText = ocrText;
+        }
+      }
 
       if (extractedText.trim().isEmpty) {
-        throw Exception("No text could be extracted from the images.");
+        throw Exception("No text could be extracted from the provided files.");
       }
 
       _processingStatus = 'Generating ${type.name} notes using AI...';
@@ -106,7 +153,7 @@ class AiNotesProvider extends ChangeNotifier {
       );
 
       await saveNote(newNote);
-      clearImages();
+      clearImagesAndPdf();
       return newNote;
 
     } catch (e) {
