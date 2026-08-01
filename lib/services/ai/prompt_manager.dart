@@ -228,4 +228,36 @@ Source Text:
 $sourceMaterial
 ''';
   }
+
+  static String getQuestionPredictorPrompt(String sourceMaterial) {
+    return '''
+You are an expert educational AI designed to analyze study materials and predict the most important exam questions.
+
+Task:
+1. Analyze the provided study material.
+2. Identify the most critical concepts, definitions, formulas, and processes.
+3. Generate 3 to 7 highly probable exam questions based on this material.
+4. Rank them by importance level ("Very High", "High", or "Medium").
+
+OUTPUT FORMAT:
+You MUST output ONLY a valid JSON array wrapped in a markdown block. Do NOT include any conversation, introductory, or concluding text. Output exactly this format:
+```json
+[
+  {
+    "importanceLevel": "Very High",
+    "questionType": "Long",
+    "questionText": "What is the detailed mechanism of...",
+    "reason": "This is a core concept that links multiple chapters together.",
+    "keyPoints": [
+      "Point 1 to remember",
+      "Point 2 to remember"
+    ]
+  }
+]
+```
+
+Source Text:
+$sourceMaterial
+''';
+  }
 }

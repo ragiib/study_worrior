@@ -29,4 +29,8 @@ abstract class AiProvider {
     required String difficulty,
     required String type,
   });
+
+  Future<String> predictImportantQuestions({
+    required String sourceMaterial,
+  });
 }

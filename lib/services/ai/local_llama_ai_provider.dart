@@ -257,4 +257,25 @@ class LocalLlamaAiProvider implements AiProvider {
     // If we failed to find JSON, throw an error with the raw response to help debugging
     throw Exception("AI generated invalid quiz format. Raw response: \$response");
   }
+
+  @override
+  Future<String> predictImportantQuestions({
+    required String sourceMaterial,
+  }) async {
+    final prompt = PromptManager.getQuestionPredictorPrompt(sourceMaterial);
+    final response = await _generateResponse(prompt);
+    
+    // Attempt to extract JSON from the response.
+    final RegExp jsonRegex = RegExp(r'```json\s*([\s\S]*?)\s*```');
+    final match = jsonRegex.firstMatch(response);
+    if (match != null && match.groupCount >= 1) {
+      return match.group(1)!.trim();
+    }
+    
+    if (response.trim().startsWith('[') && response.trim().endsWith(']')) {
+      return response.trim();
+    }
+
+    throw Exception("AI generated invalid prediction format. Raw response: \$response");
+  }
 }

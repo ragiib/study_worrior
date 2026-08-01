@@ -16,6 +16,7 @@ import 'app/providers/pomodoro_provider.dart';
 import 'app/providers/dashboard_provider.dart';
 import 'app/providers/ai_notes_provider.dart';
 import 'app/providers/ai_quiz_provider.dart';
+import 'app/providers/ai_predictor_provider.dart';
 import 'app/providers/library_provider.dart';
 import 'services/ai/ai_provider.dart';
 import 'services/ai/local_llama_ai_provider.dart';
@@ -105,6 +106,10 @@ void main() async {
         ChangeNotifierProxyProvider<AiProvider, AiQuizProvider>(
           create: (_) => AiQuizProvider(),
           update: (_, ai, aiQuiz) => aiQuiz!..updateAiProvider(ai),
+        ),
+        ChangeNotifierProxyProvider<AiProvider, AiPredictorProvider>(
+          create: (_) => AiPredictorProvider(),
+          update: (_, aiProvider, aiPredictorProvider) => aiPredictorProvider!..updateAiProvider(aiProvider),
         ),
         // Library Management
         ChangeNotifierProvider(
