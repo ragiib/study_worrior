@@ -114,33 +114,37 @@ class LocalLlamaAiProvider implements AiProvider {
   Future<String> _generateResponse(String prompt, {bool clearCache = true}) async {
     await _ensureInitialized();
     final parent = _llamaParent!;
+    final swTotal = Stopwatch()..start();
 
-    // Only clear the context if explicitly requested.
-    // Voice Teacher maintains conversation history, so we don't clear it.
     if (clearCache) {
       debugPrint('[LocalLlamaAiProvider] Requesting Context Cleanup (clearCache=true)...');
+      final swClear = Stopwatch()..start();
       await parent.clear();
-      debugPrint('[LocalLlamaAiProvider] Context Cleanup Completed.');
+      debugPrint('[LocalLlamaAiProvider] Context Cleanup Completed in ${swClear.elapsedMilliseconds} ms.');
     }
 
     final buffer = StringBuffer();
     
-    // Subscribe to stream
     final sub = parent.stream.listen((chunk) {
       buffer.write(chunk);
     });
 
     try {
       debugPrint('[LocalLlamaAiProvider] Inference: Sending prompt to model...');
+      final swPrompt = Stopwatch()..start();
       final promptId = await parent.sendPrompt(prompt);
+      debugPrint('[LocalLlamaAiProvider] Inference: sendPrompt completed in ${swPrompt.elapsedMilliseconds} ms. Waiting for completion...');
+      
+      final swWait = Stopwatch()..start();
       await parent.waitForCompletion(promptId);
-      debugPrint('[LocalLlamaAiProvider] Inference: Generation completed successfully.');
+      debugPrint('[LocalLlamaAiProvider] Inference: Generation completed successfully in ${swWait.elapsedMilliseconds} ms. Total time: ${swTotal.elapsedMilliseconds} ms.');
       return buffer.toString().trim();
     } catch (e) {
-      debugPrint('[LocalLlamaAiProvider] Inference Exceptions: $e');
+      debugPrint('[LocalLlamaAiProvider] Inference Exceptions after ${swTotal.elapsedMilliseconds} ms: $e');
       rethrow;
     } finally {
       await sub.cancel();
+      debugPrint('[LocalLlamaAiProvider] Inference Stream subscription cancelled.');
     }
   }
 
@@ -180,29 +184,33 @@ class LocalLlamaAiProvider implements AiProvider {
     await _ensureInitialized();
     final parent = _llamaParent!;
     
-    // Do not clear the cache for Voice Teacher to allow fast history processing
-    // await parent.clear(); 
-    
     final prompt = PromptManager.getVoiceTeacherPrompt(question, history);
     
-    // Subscribe to stream BEFORE sending prompt to avoid missing tokens
     final controller = StreamController<String>();
+    bool isFirstToken = true;
+    final swTotal = Stopwatch()..start();
+    final swPrompt = Stopwatch();
+    
     final sub = parent.stream.listen((chunk) {
+      if (isFirstToken) {
+         debugPrint('[LocalLlamaAiProvider] VoiceTeacher: First token received at ${swTotal.elapsedMilliseconds} ms.');
+         isFirstToken = false;
+      }
       controller.add(chunk);
     });
     
-    // Send prompt and yield stream
     try {
-      debugPrint('[LocalLlamaAiProvider] Inference (Stream): Sending prompt to model...');
+      debugPrint('[LocalLlamaAiProvider] VoiceTeacher: Sending prompt to model...');
+      swPrompt.start();
       final promptId = await parent.sendPrompt(prompt);
+      debugPrint('[LocalLlamaAiProvider] VoiceTeacher: sendPrompt finished in ${swPrompt.elapsedMilliseconds} ms.');
       
-      // Await completion in background
       parent.waitForCompletion(promptId).then((_) {
-        debugPrint('[LocalLlamaAiProvider] Inference (Stream): Generation completed successfully.');
+        debugPrint('[LocalLlamaAiProvider] VoiceTeacher: Generation completed successfully in ${swTotal.elapsedMilliseconds} ms.');
         sub.cancel();
         controller.close();
       }).catchError((e) {
-        debugPrint('[LocalLlamaAiProvider] Inference (Stream) Exceptions: $e');
+        debugPrint('[LocalLlamaAiProvider] VoiceTeacher: Exceptions during stream generation after ${swTotal.elapsedMilliseconds} ms: $e');
         sub.cancel();
         controller.addError(e);
         controller.close();
@@ -211,7 +219,7 @@ class LocalLlamaAiProvider implements AiProvider {
       yield* controller.stream;
       
     } catch (e) {
-      debugPrint('[LocalLlamaAiProvider] Inference (Stream) Setup Exceptions: $e');
+      debugPrint('[LocalLlamaAiProvider] VoiceTeacher: Setup Exceptions: $e');
       sub.cancel();
       controller.close();
       rethrow;

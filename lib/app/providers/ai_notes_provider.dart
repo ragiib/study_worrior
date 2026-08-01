@@ -148,18 +148,19 @@ class AiNotesProvider extends ChangeNotifier {
       }
 
       debugPrint('[AiNotesProvider] Context Creation & Inference Start for Notes...');
+      final sw = Stopwatch()..start();
       final generatedContent = await _aiProvider!.generateNotes(
         extractedText: extractedText,
         type: type,
       ).timeout(
         const Duration(minutes: 3),
         onTimeout: () {
-          debugPrint('[AiNotesProvider] Inference timed out after 3 minutes');
+          debugPrint('[AiNotesProvider] Inference timed out after ${sw.elapsedMilliseconds} ms');
           throw Exception('AI generation took too long. Please try a shorter document.');
         },
       );
-      
-      debugPrint('[AiNotesProvider] Request Completion: Note generated successfully.');
+      sw.stop();
+      debugPrint('[AiNotesProvider] Request Completion: Note generated successfully in ${sw.elapsedMilliseconds} ms.');
 
       final newNote = AiNote(
         id: _uuid.v4(),
