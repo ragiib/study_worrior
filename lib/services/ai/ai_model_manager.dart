@@ -21,6 +21,11 @@ class AiModelConfig {
   final int minBytes;
   final int requiredRamGB;
   final String displaySize;
+  final int contextSize;
+  final double temperature;
+  final double topP;
+  final int topK;
+  final double repetitionPenalty;
 
   const AiModelConfig({
     required this.tier,
@@ -31,6 +36,11 @@ class AiModelConfig {
     required this.minBytes,
     required this.requiredRamGB,
     required this.displaySize,
+    required this.contextSize,
+    required this.temperature,
+    required this.topP,
+    required this.topK,
+    required this.repetitionPenalty,
   });
 }
 
@@ -47,6 +57,11 @@ class AiModelManager extends ChangeNotifier {
       minBytes: 350 * 1024 * 1024,
       requiredRamGB: 4,
       displaySize: '~398 MB',
+      contextSize: 2048,
+      temperature: 0.3,
+      topP: 0.85,
+      topK: 40,
+      repetitionPenalty: 1.1,
     ),
     AiModelTier.tier6GB: AiModelConfig(
       tier: AiModelTier.tier6GB,
@@ -57,6 +72,11 @@ class AiModelManager extends ChangeNotifier {
       minBytes: 1500 * 1024 * 1024,
       requiredRamGB: 6,
       displaySize: '~2.0 GB',
+      contextSize: 4096,
+      temperature: 0.5,
+      topP: 0.9,
+      topK: 50,
+      repetitionPenalty: 1.05,
     ),
     AiModelTier.tier8GB: AiModelConfig(
       tier: AiModelTier.tier8GB,
@@ -67,6 +87,11 @@ class AiModelManager extends ChangeNotifier {
       minBytes: 4000 * 1024 * 1024,
       requiredRamGB: 8,
       displaySize: '~4.3 GB',
+      contextSize: 4096,
+      temperature: 0.6,
+      topP: 0.9,
+      topK: 50,
+      repetitionPenalty: 1.05,
     ),
   };
 

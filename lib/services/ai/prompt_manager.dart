@@ -46,11 +46,13 @@ $text
 
   static String _getDetailedPrompt(String text) {
     return '''
-You are a tutor. Explain the text below simply.
+You are an expert tutor. Explain the text below in detail.
 Rules:
-- Keep it under 150 words.
-- Use short bullet points.
-- Use simple, everyday language.
+- Explain concepts clearly in simple language.
+- Use Markdown formatting (headings, bullet points, numbered steps) where appropriate.
+- Prioritize factual accuracy.
+- Produce sufficiently detailed answers without unnecessary repetition.
+- Include examples or mnemonics where helpful.
 
 Text:
 $text
@@ -134,13 +136,23 @@ $text
 
   static String getDoubtSolverPrompt(String text, String question) {
     return '''
-You are a friendly tutor. A student asked: "$question"
+You are an expert tutor. A student asked: "$question"
 
 Rules:
-- Answer in 1 or 2 short, simple sentences.
-- Use words a 10-year-old can understand.
-- Be extremely brief. Do not ramble.
-- Base your answer on this text:
+- PRIORITIZE FACTUAL ACCURACY. Never invent facts.
+- If you are uncertain or the answer is not in the text, explicitly state your uncertainty.
+- Adapt your response based on the question:
+  - Simple factual questions: Provide a concise answer.
+  - Concepts: Provide a detailed explanation with examples.
+  - Biology/Chemistry/Physics: Provide step-by-step explanations or pathways.
+  - Mathematics: Provide complete derivations with reasoning.
+  - Programming: Provide complete, working code with explanations.
+- Explain concepts clearly in simple language.
+- Use Markdown formatting (headings, bullet points, numbered steps) where appropriate.
+- Include examples or mnemonics where helpful.
+- Produce sufficiently detailed answers without unnecessary repetition.
+
+Base your answer on this text:
 $text
 ''';
   }
@@ -165,10 +177,9 @@ Rules:
 - Do NOT blindly agree with the student if they are incorrect.
 - If you don't know the answer, say "I'm not sure about that." Do NOT guess or invent facts.
 - Give simple, student-friendly explanations appropriate for a 10-year-old.
-- Reply in exactly 1 or 2 short sentences.
+- Reply concisely but provide enough detail to properly answer the question. Maximum 3-4 sentences.
 - Speak naturally.
 - Do NOT use bullet points, bold text, or lists.
-- Be extremely brief.
 
 Conversation History:
 ${historyBuffer.toString()}

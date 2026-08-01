@@ -81,14 +81,20 @@ class LocalLlamaAiProvider implements AiProvider {
       modelParams.nGpuLayers = 0;
       modelParams.mainGpu = -1;
 
+      final config = _modelManager.activeModelConfig;
+      
       final loadCommand = LlamaLoad(
         path: path,
         modelParams: modelParams,
         contextParams: ContextParams()
-          ..nCtx = 2048
+          ..nCtx = config.contextSize
           ..nThreads = 8
           ..nThreadsBatch = 8,
-        samplingParams: SamplerParams()..temp = 0.2,
+        samplingParams: SamplerParams()
+          ..temp = config.temperature
+          ..topP = config.topP
+          ..topK = config.topK
+          ..penaltyRepeat = config.repetitionPenalty,
         verbose: true, // Enable verbose native logging for diagnosis
       );
 
