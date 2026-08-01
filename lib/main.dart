@@ -65,6 +65,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        // Provide the DatabaseService to the widget tree
+        Provider<DatabaseService>.value(value: databaseService),
         // Theme management (dark/light mode)
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         // Pomodoro timer with notification support

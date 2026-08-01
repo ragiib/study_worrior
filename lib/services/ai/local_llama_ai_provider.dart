@@ -77,11 +77,6 @@ class LocalLlamaAiProvider implements AiProvider {
       _currentModelPath = path;
 
       final modelParams = ModelParams();
-      // Use CPU-only inference (nGpuLayers = 0) so the model works on both
-      // the Android emulator (no GPU) and physical devices. The 0.5B model
-      // is small enough for CPU inference in reasonable time.
-      modelParams.nGpuLayers = 0;
-      modelParams.mainGpu = -1; // -1 bypasses the GPU device check when 0 devices are available
 
       final loadCommand = LlamaLoad(
         path: path,
