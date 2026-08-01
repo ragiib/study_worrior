@@ -17,13 +17,21 @@ class StudyWarriorApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, _) {
-        return MaterialApp(
-          title: 'Study Warrior',
-          debugShowCheckedModeBanner: false,
-          themeMode: themeProvider.themeMode,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          home: const MainShell(),
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: Banner(
+            message: 'DEPLOYMENT VERIFIED - 001',
+            location: BannerLocation.topStart,
+            color: Colors.red,
+            child: MaterialApp(
+              title: 'Study Warrior',
+              debugShowCheckedModeBanner: false,
+              themeMode: themeProvider.themeMode,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              home: const MainShell(),
+            ),
+          ),
         );
       },
     );
