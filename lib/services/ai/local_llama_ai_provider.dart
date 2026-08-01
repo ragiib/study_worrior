@@ -77,24 +77,28 @@ class LocalLlamaAiProvider implements AiProvider {
       _currentModelPath = path;
 
       final modelParams = ModelParams();
+      // Hardcode CPU-only inference to prevent native GPU SIGSEGV crashes on Android
+      modelParams.nGpuLayers = 0;
+      modelParams.mainGpu = -1;
 
       final loadCommand = LlamaLoad(
         path: path,
         modelParams: modelParams,
         contextParams: ContextParams()
           ..nCtx = 2048
-          ..nThreads = 4
-          ..nThreadsBatch = 4,
+          ..nThreads = 8
+          ..nThreadsBatch = 8,
         samplingParams: SamplerParams()..temp = 0.2,
         verbose: true, // Enable verbose native logging for diagnosis
       );
 
-      debugPrint('[LocalLlamaAiProvider] calling LlamaParent.init() ...');
+      debugPrint('[LocalLlamaAiProvider] calling LlamaParent.init() on CPU...');
       _llamaParent = LlamaParent(loadCommand, ChatMLFormat());
       await _llamaParent!.init();
-      debugPrint('[LocalLlamaAiProvider] initialization successful');
+      debugPrint('[LocalLlamaAiProvider] initialization on CPU successful');
     } catch (e) {
       debugPrint('[LocalLlamaAiProvider] initialization failed: $e');
+      _llamaParent?.dispose();
       _llamaParent = null; // ensure we retry on next call
       final errorString = e.toString().toLowerCase();
       if (errorString.contains('alloc') || errorString.contains('memory') || errorString.contains('oom')) {

@@ -145,8 +145,16 @@ class AiModelManager extends ChangeNotifier {
       if (exists) {
         final length = await file.length();
         if (length > config.minBytes) {
-          _isDownloaded = true;
-          _modelPath = filePath;
+          // Verify the file is actually readable (not corrupted OS lock or missing permissions)
+          try {
+            await file.openRead().first;
+            _isDownloaded = true;
+            _modelPath = filePath;
+          } catch (e) {
+            debugPrint('[AiModelManager] Model file exists but is not readable: $e');
+            _isDownloaded = false;
+            _modelPath = null;
+          }
           notifyListeners();
         } else {
           await file.delete();
@@ -168,6 +176,28 @@ class AiModelManager extends ChangeNotifier {
       if (!_readyCompleter.isCompleted) {
         _readyCompleter.complete();
       }
+    }
+  }
+
+  /// Permanently deletes the currently selected model from disk
+  /// and updates the internal state. Useful if the model is corrupted.
+  Future<void> deleteCurrentModel() async {
+    try {
+      final config = activeModelConfig;
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/${config.filename}';
+      final file = File(filePath);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+      
+      _isDownloaded = false;
+      _modelPath = null;
+      notifyListeners();
+      debugPrint('[AiModelManager] Successfully deleted current model: $filePath');
+    } catch (e) {
+      debugPrint('[AiModelManager] Error deleting model: $e');
     }
   }
 
