@@ -109,7 +109,14 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
         setState(() {
           _processingStatus = 'Extracting text from PDF...';
         });
-        extractedText += await _pdfService.extractTextFromPdf(_selectedPdf!.path!) + '\n\n';
+        try {
+          extractedText += await _pdfService.extractTextFromPdf(_selectedPdf!.path!) + '\n\n';
+        } catch (e) {
+          debugPrint('[AiDoubtSolverScreen] PDF Extraction Exceptions: $e');
+          setState(() {
+            _error = e.toString().replaceAll('Exception: ', '');
+          });
+        }
       }
       
       if (_selectedImage != null) {
@@ -127,11 +134,19 @@ class _AiDoubtSolverScreenState extends State<AiDoubtSolverScreen> {
         _processingStatus = 'Solving doubt using AI...';
       });
 
+      debugPrint('[AiDoubtSolverScreen] Context Creation & Inference Start for Doubt Solver...');
       final aiProvider = context.read<AiProvider>();
       final result = await aiProvider.answerDoubt(
         contextText: extractedText,
         question: question,
+      ).timeout(
+        const Duration(minutes: 3),
+        onTimeout: () {
+          debugPrint('[AiDoubtSolverScreen] Inference timed out after 3 minutes');
+          throw Exception('AI generation took too long. Please try a shorter document.');
+        },
       );
+      debugPrint('[AiDoubtSolverScreen] Request Completion: Doubt solved successfully.');
 
       setState(() {
         _isCompletingSequence = true;

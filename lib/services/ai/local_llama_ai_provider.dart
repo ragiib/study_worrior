@@ -118,7 +118,9 @@ class LocalLlamaAiProvider implements AiProvider {
     // Only clear the context if explicitly requested.
     // Voice Teacher maintains conversation history, so we don't clear it.
     if (clearCache) {
+      debugPrint('[LocalLlamaAiProvider] Requesting Context Cleanup (clearCache=true)...');
       await parent.clear();
+      debugPrint('[LocalLlamaAiProvider] Context Cleanup Completed.');
     }
 
     final buffer = StringBuffer();
@@ -129,11 +131,13 @@ class LocalLlamaAiProvider implements AiProvider {
     });
 
     try {
+      debugPrint('[LocalLlamaAiProvider] Inference: Sending prompt to model...');
       final promptId = await parent.sendPrompt(prompt);
       await parent.waitForCompletion(promptId);
+      debugPrint('[LocalLlamaAiProvider] Inference: Generation completed successfully.');
       return buffer.toString().trim();
     } catch (e) {
-      debugPrint('LocalLlamaAiProvider Error: $e');
+      debugPrint('[LocalLlamaAiProvider] Inference Exceptions: $e');
       rethrow;
     } finally {
       await sub.cancel();
@@ -189,13 +193,16 @@ class LocalLlamaAiProvider implements AiProvider {
     
     // Send prompt and yield stream
     try {
+      debugPrint('[LocalLlamaAiProvider] Inference (Stream): Sending prompt to model...');
       final promptId = await parent.sendPrompt(prompt);
       
       // Await completion in background
       parent.waitForCompletion(promptId).then((_) {
+        debugPrint('[LocalLlamaAiProvider] Inference (Stream): Generation completed successfully.');
         sub.cancel();
         controller.close();
       }).catchError((e) {
+        debugPrint('[LocalLlamaAiProvider] Inference (Stream) Exceptions: $e');
         sub.cancel();
         controller.addError(e);
         controller.close();
@@ -204,9 +211,9 @@ class LocalLlamaAiProvider implements AiProvider {
       yield* controller.stream;
       
     } catch (e) {
+      debugPrint('[LocalLlamaAiProvider] Inference (Stream) Setup Exceptions: $e');
       sub.cancel();
       controller.close();
-      debugPrint('LocalLlamaAiProvider Stream Error: $e');
       rethrow;
     }
   }

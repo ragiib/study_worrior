@@ -103,11 +103,17 @@ class AiQuizProvider extends ChangeNotifier {
         _processingStatus = 'Extracting text from PDF...';
         notifyListeners();
         
-        final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
-        if (extractedText.isNotEmpty) {
-          extractedText += "\n\n" + pdfText;
-        } else {
-          extractedText = pdfText;
+        try {
+          final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
+          if (extractedText.isNotEmpty) {
+            extractedText += "\n\n" + pdfText;
+          } else {
+            extractedText = pdfText;
+          }
+        } catch (e) {
+          debugPrint('[AiQuizProvider] PDF Extraction Exceptions: $e');
+          _lastError = e.toString().replaceAll('Exception: ', '');
+          notifyListeners();
         }
       }
 
@@ -136,12 +142,21 @@ class AiQuizProvider extends ChangeNotifier {
         throw Exception("AI Engine is not initialized.");
       }
 
+      debugPrint('[AiQuizProvider] Context Creation & Inference Start for Quiz...');
       final jsonString = await _aiProvider!.generateQuiz(
         sourceMaterial: extractedText,
         numQuestions: numQuestions,
         difficulty: difficulty,
         type: type,
+      ).timeout(
+        const Duration(minutes: 3),
+        onTimeout: () {
+          debugPrint('[AiQuizProvider] Inference timed out after 3 minutes');
+          throw Exception('AI generation took too long. Please try a shorter document.');
+        },
       );
+      
+      debugPrint('[AiQuizProvider] Request Completion: Quiz generated successfully.');
 
       final List<dynamic> jsonList = jsonDecode(jsonString);
       final quiz = Quiz.fromJson(jsonList);

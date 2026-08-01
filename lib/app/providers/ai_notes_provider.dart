@@ -107,11 +107,18 @@ class AiNotesProvider extends ChangeNotifier {
         _processingStatus = 'Extracting text from PDF...';
         notifyListeners();
         
-        final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
-        if (extractedText.isNotEmpty) {
-          extractedText += "\n\n" + pdfText;
-        } else {
-          extractedText = pdfText;
+        try {
+          final pdfText = await _pdfService.extractTextFromPdf(_selectedPdf!.path!);
+          if (extractedText.isNotEmpty) {
+            extractedText += "\n\n" + pdfText;
+          } else {
+            extractedText = pdfText;
+          }
+        } catch (e) {
+          debugPrint('[AiNotesProvider] PDF Extraction Exceptions: $e');
+          _lastError = e.toString().replaceAll('Exception: ', '');
+          notifyListeners();
+          // Continue functioning normally for image extraction if available
         }
       }
 
@@ -140,10 +147,19 @@ class AiNotesProvider extends ChangeNotifier {
         throw Exception("AI Engine is not initialized.");
       }
 
+      debugPrint('[AiNotesProvider] Context Creation & Inference Start for Notes...');
       final generatedContent = await _aiProvider!.generateNotes(
         extractedText: extractedText,
         type: type,
+      ).timeout(
+        const Duration(minutes: 3),
+        onTimeout: () {
+          debugPrint('[AiNotesProvider] Inference timed out after 3 minutes');
+          throw Exception('AI generation took too long. Please try a shorter document.');
+        },
       );
+      
+      debugPrint('[AiNotesProvider] Request Completion: Note generated successfully.');
 
       final newNote = AiNote(
         id: _uuid.v4(),
